@@ -6,6 +6,7 @@
 #include "material.h"
 #include "utils.h"
 #include <ctime>
+#include <chrono>
 
 
 vec3 color(const ray& r, hitable *world, int depth) {
@@ -82,7 +83,6 @@ int main()
 
     srand48(time(NULL));
 
-    std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
     vec3* pic = new vec3[nx * ny];
 
@@ -103,8 +103,14 @@ int main()
     float aperture = 0.1;
     camera cam(lookfrom, lookat, vec3(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
 
+    std::cout << "- Start Rendering... " << nx << " x " << ny << "\n";
+
+    // Record start time                          
+    auto start = std::chrono::high_resolution_clock::now();
+
     for (int k = 0, j = ny-1; j >= 0; j--)
     {
+        fprintf(stdout, "\rRendering (%d spp) %5.2f%%", ns, 100.*k/(nx * ny));        
         for (int i = 0; i < nx; i++)
         {
             vec3 col(0, 0, 0);
@@ -119,18 +125,22 @@ int main()
             col /= float(ns);
             pic[k++] = col;
 
-#if 0
+            #if 0
             col = vec3( sqrt(col[0]), sqrt(col[1]), sqrt(col[2]) );
             int ir = int(255.99*col[0]); 
             int ig = int(255.99*col[1]); 
             int ib = int(255.99*col[2]); 
             std::cout << ir << " " << ig << " " << ib << "\n";
-#endif
+            #endif
         }
     }
+    // Record end time
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    printf("- Render Done! Time=%lf seconds\n", elapsed.count());
     save_to_ppm(pic, nx, ny);
     delete[] pic;
-
+    system("pause");
 }
 
 
