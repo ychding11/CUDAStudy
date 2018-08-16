@@ -7,7 +7,6 @@
 *.suo
 *.sdf
 *.user
-*.i
 *.vspscc
 *.opensdf
 *.opendb
@@ -17,20 +16,12 @@
 *.lastbuildstate
 *.ilk
 *.VC.db
-*.ppm
 log.txt
 *.txt
 .vs
 Bin
 ipch
 Debug
-Debug Win8
-Debug XP
-Profile
 Release
-Release Win8
-Release XP
 x64
-Test
-/wiki
 vs2015

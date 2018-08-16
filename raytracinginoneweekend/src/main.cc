@@ -64,10 +64,12 @@ inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 
 inline int  to_int(float x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
 
-void save_to_ppm(vec3* output, int w, int h)
+void save_to_ppm(vec3* output, int w, int h, int s, int t)
 {
+    char filename[128];
+    sprintf_s(filename, 128, "image-%d-%d-%d-%d.ppm", w, h, s, t);
     FILE *f = nullptr;
-    fopen_s(&f, "result.ppm", "w");
+    fopen_s(&f, filename, "w");
     fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
     for (int i = 0; i < w * h; i++) 
         fprintf(f, "%d %d %d ", to_int(output[i].x()), to_int(output[i].y()), to_int(output[i].z()));
@@ -108,6 +110,7 @@ int main()
     // Record start time                          
     auto start = std::chrono::high_resolution_clock::now();
 
+    //#pragma omp parallel for schedule(dynamic, 1) private(col)
     for (int k = 0, j = ny-1; j >= 0; j--)
     {
         fprintf(stdout, "\rRendering (%d spp) %5.2f%%", ns, 100.*k/(nx * ny));        
@@ -138,10 +141,10 @@ int main()
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;
     printf("- Render Done! Time=%lf seconds\n", elapsed.count());
-    save_to_ppm(pic, nx, ny);
+    save_to_ppm(pic, nx, ny, ns, int(elapsed.count()));
     delete[] pic;
     system("pause");
 }
-
+                     
 
 
