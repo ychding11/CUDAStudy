@@ -59,13 +59,33 @@ hitable *random_scene() {
     return new hitable_list(list,i);
 }
 
-int main() {
-    int nx = 1200;
-    int ny = 800;
+inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
+
+inline int  to_int(float x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
+
+void save_to_ppm(vec3* output, int w, int h)
+{
+    FILE *f = nullptr;
+    fopen_s(&f, "result.ppm", "w");
+    fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
+    for (int i = 0; i < w * h; i++) 
+        fprintf(f, "%d %d %d ", to_int(output[i].x()), to_int(output[i].y()), to_int(output[i].z()));
+    fclose(f);
+
+}
+
+int main()
+{
+    int nx = 512;
+    int ny = 512;
     int ns = 10;
+
     srand48(time(NULL));
 
     std::cout << "P3\n" << nx << " " << ny << "\n255\n";
+
+    vec3* pic = new vec3[nx * ny];
+
     hitable *list[5];
     float R = cos(M_PI/4);
     list[0] = new sphere(vec3(0,0,-1), 0.5, new lambertian(vec3(0.1, 0.2, 0.5)));
@@ -74,19 +94,22 @@ int main() {
     list[3] = new sphere(vec3(-1,0,-1), 0.5, new dielectric(1.5));
     list[4] = new sphere(vec3(-1,0,-1), -0.45, new dielectric(1.5));
     hitable *world = new hitable_list(list,5);
+
     world = random_scene();
 
     vec3 lookfrom(13,2,3);
     vec3 lookat(0,0,0);
     float dist_to_focus = 10.0;
     float aperture = 0.1;
-
     camera cam(lookfrom, lookat, vec3(0,1,0), 20, float(nx)/float(ny), aperture, dist_to_focus);
 
-    for (int j = ny-1; j >= 0; j--) {
-        for (int i = 0; i < nx; i++) {
+    for (int k = 0, j = ny-1; j >= 0; j--)
+    {
+        for (int i = 0; i < nx; i++)
+        {
             vec3 col(0, 0, 0);
-            for (int s=0; s < ns; s++) {
+            for (int s=0; s < ns; s++)
+            {
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
                 ray r = cam.get_ray(u, v);
@@ -94,13 +117,20 @@ int main() {
                 col += color(r, world,0);
             }
             col /= float(ns);
+            pic[k++] = col;
+
+#if 0
             col = vec3( sqrt(col[0]), sqrt(col[1]), sqrt(col[2]) );
             int ir = int(255.99*col[0]); 
             int ig = int(255.99*col[1]); 
             int ib = int(255.99*col[2]); 
             std::cout << ir << " " << ig << " " << ib << "\n";
+#endif
         }
     }
+    save_to_ppm(pic, nx, ny);
+    delete[] pic;
+
 }
 
 
