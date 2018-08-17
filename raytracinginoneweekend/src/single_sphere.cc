@@ -5,21 +5,30 @@
 #include <ctime>
 #include <chrono>
 
-bool hit_sphere(const ray& r, const vec3& center, float radius)
+float hit_sphere(const ray& r, const vec3& center, float radius)
 {
     vec3 oc = r.origin() - center;
     float a = dot(r.direction(), r.direction());
     float b = 2.0f * dot(oc, r.direction());
     float c = dot(oc, oc) - radius * radius;
     float d = b * b - 4.f * a * c;
-    return d > 0.f;
+    if (d < 0.f)
+    {
+        return -1.f;
+    }
+    else
+    {
+        return (-b - sqrt(d)) / (2.f * a);
+    }
 }
 
 vec3 color(const ray& r)
 {
-    if (hit_sphere(r, vec3(0.f, 0.f, -1.f), 0.5f))
+    float t = hit_sphere(r, vec3(0.f, 0.f, -1.f), 0.5f);
+    if (t > 0.f)
     { 
-        return vec3(1.f,0,0);
+        vec3 n = unit_vector(r.point_at_parameter(t) - vec3(0.f, 0.f, -1.f));
+        return n;
     }
     else
     {
@@ -55,7 +64,7 @@ int main()
 {
     int nx = 256;
     int ny = 256;
-    int ns = 1;
+    int ns = 50;
 
     //srand48(time(NULL));
 
@@ -81,8 +90,8 @@ int main()
             vec3 col(0, 0, 0);
             for (int s=0; s < ns; s++)
             {
-                float u = float(i) / float(nx);
-                float v = float(j) / float(ny);
+                float u = float(i + drand48()) / float(nx);
+                float v = float(j + drand48()) / float(ny);
                 ray r(origin, low_left_corner + u * horizonal + v * vertical);
                 col += color(r);
             }
