@@ -5,5 +5,5 @@
 
 # images
 
-- ![final](image/image-512-512-10-41.ppm)
+- ![final](./image/image-512-512-10-41.ppm)
 
