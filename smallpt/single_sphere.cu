@@ -60,21 +60,27 @@ __device__ vec3 color(const ray& r)
     }
 }
 
+#define SUB_BLOCK_X 256
+#define SUB_BLOCK_Y 256
 
-__global__ void setup_random_kernel(curandState *states, int nx, int ny)
+__global__ void setup_random_kernel(curandState *states, int nx, int ny, int subx = 0, int suby = 0)
 {
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
+    x = SUB_BLOCK_X * subx + x;
+    y = SUB_BLOCK_Y * suby + y;
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
 
     curand_init(1234, i, 0, &states[i]);
 }
 
 // __global__ : executed on the device (GPU) and callable only from host (CPU) 
-__global__ void render_kernel(curandState *states, float* output, int nx, int ny, int ns)
+__global__ void render_kernel(curandState *states, float* output, int nx, int ny, int ns, int subx = 0, int suby = 0)
 {
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
+    x = SUB_BLOCK_X * subx + x;
+    y = SUB_BLOCK_Y * suby + y;
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
 
     vec3 low_left_corner(-1.f, -1.f, -1.f);
@@ -112,20 +118,30 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 
     std::chrono::duration<double> elapsed;
 
+    int nSubx = (width + SUB_BLOCK_X - 1) / SUB_BLOCK_X;
+    int nSuby = (width + SUB_BLOCK_Y - 1) / SUB_BLOCK_Y;
+
+    printf("\n Param  %d, %d, %d\n", width, height, samps);
     CUDA_CALL_CHECK( cudaSetDevice(0) );
 
     CUDA_CALL_CHECK( cudaMalloc(&output_d, width * height * sizeof(float) * 3) );
         
-    dim3 block(8, 8, 1);   
-    dim3 grid(width / block.x, height / block.y, 1);
+    dim3 block(16, 16, 1);   
+    dim3 subgrid(SUB_BLOCK_X / block.x, SUB_BLOCK_Y / block.y, 1);
+    dim3 grid( width/ block.x, height / block.y, 1);
 
     // Record start time                          
     auto startRand = std::chrono::high_resolution_clock::now();
     curandState *devStates;
     CUDA_CALL_CHECK(cudaMalloc((void **)&devStates, width * height * sizeof(curandState)));
-    setup_random_kernel <<< grid, block >>>(devStates, width, height); 
-    CUDA_CALL_CHECK(cudaGetLastError());
-    CUDA_CALL_CHECK(cudaDeviceSynchronize());
+
+    for (int i = 0; i < nSubx; ++i)
+        for (int j = 0; j < nSuby; ++j)
+        {
+            setup_random_kernel <<< subgrid, block >>>(devStates, width, height, i, j); 
+            CUDA_CALL_CHECK(cudaGetLastError());
+            CUDA_CALL_CHECK(cudaDeviceSynchronize());
+        }
     auto finishRand = std::chrono::high_resolution_clock::now();
     elapsed = finishRand - startRand;
     printf("Random State Done! Time=%lf seconds\n", elapsed.count());
@@ -135,7 +151,9 @@ int TestSmallPTOnGPU(int width, int height, int samps)
     // Record start time                          
     auto start = std::chrono::high_resolution_clock::now();
 
-    render_kernel <<< grid, block >>>(devStates, output_d, width, height, samps);  
+    //for (int i = 0; i < nSubx; ++i)
+       // for (int j = 0; j < nSuby; ++j)
+            render_kernel <<< grid, block >>>(devStates, output_d, width, height, samps);  
     CUDA_CALL_CHECK(cudaGetLastError());
     CUDA_CALL_CHECK(cudaDeviceSynchronize());
 
@@ -156,7 +174,8 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 
 int main(int argc, char *argv[])
 {
-    int width = 512, height = 512, samps = 1024;
+    ///int width = 512, height = 512, samps = 1024;
+    int width = 512, height = 512, samps = 128;
     
     if (argc > 1)
     {
