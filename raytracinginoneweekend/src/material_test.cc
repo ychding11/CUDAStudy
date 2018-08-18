@@ -4,7 +4,12 @@
 #include "float.h"
 #include "utils.h"
 #include "ray.h"
+#include "hitable.h"
+#include "material.h"
+#include "hitable_list.h"
+#include "sphere.h"
 
+#if 0
 float hit_sphere(const ray& r, const vec3& center, float radius)
 {
     vec3 oc = r.origin() - center;
@@ -21,14 +26,15 @@ float hit_sphere(const ray& r, const vec3& center, float radius)
         return (-b - sqrt(d)) / (2.f * a);
     }
 }
+#endif
 
-vec3 color(const ray& r)
+vec3 color(const ray& r, hitable *world)
 {
-    float t = hit_sphere(r, vec3(0.f, 0.f, -1.f), 0.5f);
-    if (t > 0.f)
+    hit_record rec;
+    if (world->hit(r, 0.f, MAXFLOAT, rec))
     { 
-        vec3 n = unit_vector(r.point_at_parameter(t) - vec3(0.f, 0.f, -1.f));
-        return n;
+        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+        return 0.5 * color(ray(rec.p, target-rec.p), world);
     }
     else
     {
@@ -54,7 +60,7 @@ void save_to_ppm(vec3* output, int w, int h, int s, int t)
         fprintf(f, "%d %d %d ", to_int(output[i].x()), to_int(output[i].y()), to_int(output[i].z()));
     fclose(f);
 
-    fprintf(stdout, "- Save as %s\n", filename);
+    fprintf(stdout, "- Save as %s\n\n", filename);
     char display_image[128];
     sprintf_s(display_image, 128, "ffplay.exe %s", filename);
     system(display_image);
@@ -64,10 +70,9 @@ int main()
 {
     int nx = 256;
     int ny = 256;
-    int ns = 50;
+    int ns = 8;
 
-    //srand48(time(NULL));
-
+    srand48(time(NULL));
 
     vec3* pic = new vec3[nx * ny];
 
@@ -75,6 +80,11 @@ int main()
     vec3 horizonal(2.f, 0.f, 0.f);
     vec3 vertical(0.f, 2.f, 0.f);
     vec3 origin(0.f, 0.f, 0.f);
+
+    hitable *list[2];
+    list[0] = new sphere(vec3(0.f, 0.f, -1.f), 0.5f);
+    list[1] = new sphere(vec3(0.f, -100.5f, -1.f), 100.f);
+    hitable* world = new hitable_list(list, 2);
 
     std::cout << "- Start Rendering... " << nx << " x " << ny << "\n";
 
@@ -93,7 +103,7 @@ int main()
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
                 ray r(origin, low_left_corner + u * horizonal + v * vertical);
-                col += color(r);
+                col += color(r, world);
             }
             col /= float(ns);
             pic[k++] = col;
@@ -102,7 +112,7 @@ int main()
     // Record end time
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;
-    printf("- Render Done! Time=%lf seconds\n", elapsed.count());
+    printf("\n- Render Done! Time=%lf seconds\n", elapsed.count());
     save_to_ppm(pic, nx, ny, ns, int(elapsed.count()));
     delete[] pic;
     system("pause");
