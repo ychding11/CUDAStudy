@@ -50,7 +50,7 @@ __device__ vec3 color(const ray& r)
     if (t > 0.f)
     {
         vec3 n = unit_vector(r.point_at_parameter(t) - vec3(0.f, 0.f, -1.f));
-        return n;
+        return 0.5f * vec3(n.x() + 1.f, n.y() + 1.f, n.z() + 1.f);
     }
     else
     {
@@ -60,15 +60,17 @@ __device__ vec3 color(const ray& r)
     }
 }
 
-#define SUB_BLOCK_X 256
-#define SUB_BLOCK_Y 256
+#define SUB_GRID_X 256
+#define SUB_GRID_Y 256                
+#define BLOCK_X 8
+#define BLOCK_Y 8
 
 __global__ void setup_random_kernel(curandState *states, int nx, int ny, int subx = 0, int suby = 0)
 {
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
-    x = SUB_BLOCK_X * subx + x;
-    y = SUB_BLOCK_Y * suby + y;
+    x = SUB_GRID_X * subx + x;
+    y = SUB_GRID_Y * suby + y;
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
 
     curand_init(1234, i, 0, &states[i]);
@@ -79,8 +81,8 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
 {
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
-    x = SUB_BLOCK_X * subx + x;
-    y = SUB_BLOCK_Y * suby + y;
+    x = SUB_GRID_X * subx + x;
+    y = SUB_GRID_Y * suby + y;
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
 
     vec3 low_left_corner(-1.f, -1.f, -1.f);
@@ -111,48 +113,93 @@ inline int toInt(float x){ return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }  // 
 
 void SaveToPPM(float* output, int w, int h);
 
+void save_curandState(void* output, int w, int h)
+{
+    char filename[128];
+    sprintf_s(filename, 128, "curand_state_%dx%d.bin", w, h);
+    FILE *f = fopen(filename, "wb");          
+    fwrite(output,sizeof(curandState), w * h, f);
+    fclose(f);
+    fprintf(stdout, "- save curand states into %s\n", filename);
+}
+
+void load_curandState(void* output, int w, int h)
+{
+    char filename[128];
+    sprintf_s(filename, 128, "curand_state_%dx%d.bin", w, h);
+    FILE *f = fopen(filename, "wb");          
+    fread(output,sizeof(curandState), w * h, f);
+    fclose(f);
+    fprintf(stdout, "- load curand states from %s\n", filename);
+}
+
+inline bool file_exists(const std::string name)
+{
+    struct stat buffer;
+    return (stat(name.c_str(), &buffer) == 0);
+}
+
 int TestSmallPTOnGPU(int width, int height, int samps)
 {
+    printf("\n Param  %d, %d, %d\n", width, height, samps);
+
     float* output_h = new float[width * height * 3]; // pointer to memory for image on the host (system RAM)
     float* output_d;    // pointer to memory for image on the device (GPU VRAM)
 
     std::chrono::duration<double> elapsed;
 
-    int nSubx = (width + SUB_BLOCK_X - 1) / SUB_BLOCK_X;
-    int nSuby = (width + SUB_BLOCK_Y - 1) / SUB_BLOCK_Y;
+    int nSubx = (width + SUB_GRID_X - 1) / SUB_GRID_X;
+    int nSuby = (width + SUB_GRID_Y - 1) / SUB_GRID_Y;
 
-    printf("\n Param  %d, %d, %d\n", width, height, samps);
-    CUDA_CALL_CHECK( cudaSetDevice(0) );
+    dim3 block(BLOCK_X, BLOCK_Y, 1);   
+    dim3 subgrid(SUB_GRID_X / block.x, SUB_GRID_Y / block.y, 1);
+    dim3 grid( width/ block.x, height / block.y, 1);
+
 
     CUDA_CALL_CHECK( cudaMalloc(&output_d, width * height * sizeof(float) * 3) );
         
-    dim3 block(16, 16, 1);   
-    dim3 subgrid(SUB_BLOCK_X / block.x, SUB_BLOCK_Y / block.y, 1);
-    dim3 grid( width/ block.x, height / block.y, 1);
-
-    // Record start time                          
-    auto startRand = std::chrono::high_resolution_clock::now();
     curandState *devStates;
+    curandState *devStates_h = new curandState[width * height ];
     CUDA_CALL_CHECK(cudaMalloc((void **)&devStates, width * height * sizeof(curandState)));
 
-    for (int i = 0; i < nSubx; ++i)
-        for (int j = 0; j < nSuby; ++j)
+    char curandState_filename[128];
+    sprintf_s(curandState_filename, 128, "curand_state_%dx%d.bin", width, height);
+    if (!file_exists(curandState_filename))
+    {
+        // Record start time                          
+        auto startRand = std::chrono::high_resolution_clock::now();
+
+        for (int i = 0; i < nSuby; ++i)
         {
-            setup_random_kernel <<< subgrid, block >>>(devStates, width, height, i, j); 
-            CUDA_CALL_CHECK(cudaGetLastError());
-            CUDA_CALL_CHECK(cudaDeviceSynchronize());
+            fprintf(stdout, "\rGenerate curand state(%5.2lf%%)...\n", 100.f * float(i) / float(nSuby));
+            for (int j = 0; j < nSubx; ++j)
+            {
+                setup_random_kernel <<< subgrid, block >>>(devStates, width, height, j, i); 
+                CUDA_CALL_CHECK(cudaGetLastError());
+                CUDA_CALL_CHECK(cudaDeviceSynchronize());
+            }
         }
-    auto finishRand = std::chrono::high_resolution_clock::now();
-    elapsed = finishRand - startRand;
-    printf("Random State Done! Time=%lf seconds\n", elapsed.count());
+        auto finishRand = std::chrono::high_resolution_clock::now();
+        elapsed = finishRand - startRand;
+        printf("Random State Done! Time=%lf seconds\n", elapsed.count());
+
+        CUDA_CALL_CHECK(cudaMemcpy(devStates_h , devStates, width * height * sizeof(curandState), cudaMemcpyDeviceToHost));
+        save_curandState(devStates_h, width, height);
+    }
+    else
+    {
+        load_curandState(devStates_h, width, height);
+        CUDA_CALL_CHECK(cudaMemcpy(devStates, devStates_h , width * height * sizeof(curandState), cudaMemcpyHostToDevice));
+    }
+
 
     printf("\nStart rendering... %d, %d, %d\n", width, height, samps);
  
     // Record start time                          
     auto start = std::chrono::high_resolution_clock::now();
 
-    //for (int i = 0; i < nSubx; ++i)
-       // for (int j = 0; j < nSuby; ++j)
+    for (int i = 0; i < nSubx; ++i)
+        for (int j = 0; j < nSuby; ++j)
             render_kernel <<< grid, block >>>(devStates, output_d, width, height, samps);  
     CUDA_CALL_CHECK(cudaGetLastError());
     CUDA_CALL_CHECK(cudaDeviceSynchronize());
@@ -186,6 +233,7 @@ int main(int argc, char *argv[])
         if (checkCmdLineFlag(argc, (const char **)argv, "samples"))
             samps = getCmdLineArgumentInt(argc, (const char **)argv, "samples");
     }
+    CUDA_CALL_CHECK( cudaSetDevice(0) );
 
     TestSmallPTOnGPU(width, height, samps);
     system("PAUSE");
@@ -201,5 +249,4 @@ void SaveToPPM(float* output, int w, int h)
     fclose(f);
 
     system("ffplay smallptcuda.ppm");
-
 }
