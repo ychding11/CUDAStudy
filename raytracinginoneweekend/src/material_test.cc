@@ -26,7 +26,6 @@ float hit_sphere(const ray& r, const vec3& center, float radius)
         return (-b - sqrt(d)) / (2.f * a);
     }
 }
-#endif
 
 vec3 color(const ray& r, hitable *world)
 {
@@ -43,7 +42,31 @@ vec3 color(const ray& r, hitable *world)
         return (1.0-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
     }
 }
+#endif
 
+vec3 color(const ray& r, hitable *world, int depth)
+{
+    hit_record rec;
+    if (world->hit(r, 0.001f, MAXFLOAT, rec))
+    { 
+        ray scattered;
+        vec3 attenuation;
+        if (depth < 20 && rec.mat_ptr && rec.mat_ptr->scatter(r, rec, attenuation, scattered))
+        {
+            return attenuation * color(scattered, world, depth + 1);
+        }
+        else
+        {
+            return vec3(0.f, 0.f, 0.f);
+        }
+    }
+    else
+    {
+        vec3 unit_direction = unit_vector(r.direction());
+        float t = 0.5*(unit_direction.y() + 1.0);
+        return (1.0-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
+    }
+}
 
 inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 
@@ -70,7 +93,7 @@ int main()
 {
     int nx = 256;
     int ny = 256;
-    int ns = 8;
+    int ns = 32;
 
     srand48(time(NULL));
 
@@ -81,9 +104,11 @@ int main()
     vec3 vertical(0.f, 2.f, 0.f);
     vec3 origin(0.f, 0.f, 0.f);
 
-    hitable *list[2];
-    list[0] = new sphere(vec3(0.f, 0.f, -1.f), 0.5f);
-    list[1] = new sphere(vec3(0.f, -100.5f, -1.f), 100.f);
+    hitable *list[4];
+    list[0] = new sphere(vec3(0.f, 0.f, -1.f), 0.5f, new lambertian(vec3(0.8, 0.3, 0.3)));
+    list[1] = new sphere(vec3(0.f, -100.5f, -1.f), 100.f, new lambertian(vec3(0.4, 0.8, 0.3)));
+    list[2] = new sphere(vec3(1.f, 0.f, -1.f), 0.5f, new lambertian(vec3(0.8, 0.6, 0.2)));
+    list[3] = new sphere(vec3(-1.f,0.f, 1.f), 100.f, new lambertian(vec3(0.8, 0.8, 0.8)));
     hitable* world = new hitable_list(list, 2);
 
     std::cout << "- Start Rendering... " << nx << " x " << ny << "\n";
@@ -103,7 +128,7 @@ int main()
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
                 ray r(origin, low_left_corner + u * horizonal + v * vertical);
-                col += color(r, world);
+                col += color(r, world, 0);
             }
             col /= float(ns);
             pic[k++] = col;
