@@ -3,7 +3,8 @@
 #include "ray.h"
 #include "utils.h"
 
-vec3 random_in_unit_disk() {
+vec3 random_in_unit_disk()
+{
     vec3 p;
     do {
         p = 2.0*vec3(drand48(),drand48(),0) - vec3(1,1,0);
@@ -11,9 +12,12 @@ vec3 random_in_unit_disk() {
     return p;
 }
 
-class camera {
+class camera
+{
     public:
-        camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect, float aperture, float focus_dist) { // vfov is top to bottom in degrees
+        // vfov is top to bottom in degrees
+        camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect, float aperture, float focus_dist)
+        { 
             lens_radius = aperture / 2;
             float theta = vfov*M_PI/180;
             float half_height = tan(theta/2);
@@ -26,7 +30,9 @@ class camera {
             horizontal = 2*half_width*focus_dist*u;
             vertical = 2*half_height*focus_dist*v;
         }
-        ray get_ray(float s, float t) {
+
+        ray get_ray(float s, float t)
+        {
             vec3 rd = lens_radius*random_in_unit_disk();
             vec3 offset = u * rd.x() + v * rd.y();
             return ray(origin + offset, lower_left_corner + s*horizontal + t*vertical - origin - offset); 

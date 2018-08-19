@@ -1,6 +1,7 @@
 #include <iostream>
 #include <ctime>
 #include <chrono>
+#include <cassert>
 #include "float.h"
 #include "utils.h"
 #include "ray.h"
@@ -8,6 +9,7 @@
 #include "material.h"
 #include "hitable_list.h"
 #include "sphere.h"
+#include "camera.h"
 
 #if 0
 float hit_sphere(const ray& r, const vec3& center, float radius)
@@ -92,26 +94,34 @@ void save_to_ppm(vec3* output, int w, int h, int s, int t)
 int main()
 {
     int nx = 256;
-    int ny = 256;
-    int ns = 32;
+    int ny = 128;
+    int ns = 1000;
 
     srand48(time(NULL));
 
     vec3* pic = new vec3[nx * ny];
+    assert(pic);
 
-    vec3 low_left_corner(-1.f, -1.f, -1.f);
-    vec3 horizonal(2.f, 0.f, 0.f);
+    vec3 low_left_corner(-2.f, -1.f, -1.f);
+    vec3 horizonal(4.f, 0.f, 0.f);
     vec3 vertical(0.f, 2.f, 0.f);
     vec3 origin(0.f, 0.f, 0.f);
 
-    hitable *list[4];
-    list[0] = new sphere(vec3(0.f, 0.f, -1.f), 0.5f, new lambertian(vec3(0.8, 0.3, 0.3)));
-    list[1] = new sphere(vec3(0.f, -100.5f, -1.f), 100.f, new lambertian(vec3(0.4, 0.8, 0.3)));
-    list[2] = new sphere(vec3(1.f, 0.f, -1.f), 0.5f, new lambertian(vec3(0.8, 0.6, 0.2)));
-    list[3] = new sphere(vec3(-1.f,0.f, 1.f), 100.f, new lambertian(vec3(0.8, 0.8, 0.8)));
-    hitable* world = new hitable_list(list, 2);
+    vec3 lookfrom(-2, 4, 1);
+    vec3 lookat(0, 0, -1);
+    float dist_to_focus = 1.0;
+    float aperture = 0.1;
+    camera cam(lookfrom, lookat, vec3(0, 1, 0), 90, float(nx) / float(ny), aperture, dist_to_focus);
 
-    std::cout << "- Start Rendering... " << nx << " x " << ny << "\n";
+
+    hitable *list[4];
+    list[0] = new sphere(vec3( 0.f, 0.f,     -1.f),     0.5f, new lambertian(vec3(0.1, 0.2, 0.5)));
+    list[1] = new sphere(vec3( 0.f, -100.5f, -1.f),     100.f, new lambertian(vec3(0.8, 0.8, 0.0)));
+    list[2] = new sphere(vec3( 1.f, 0.f,     -1.f),     0.5f, new metal(vec3(0.8, 0.6, 0.2), 1.f));
+    list[3] = new sphere(vec3( -1.f,0.f,     -1.f),     0.5f, new dielectric(1.5f));
+    hitable* world = new hitable_list(list, 4);
+
+    fprintf(stdout, "- Start Rendering... %dx%d\n", nx, ny);
 
     // Record start time                          
     auto start = std::chrono::high_resolution_clock::now();
@@ -119,7 +129,7 @@ int main()
     //#pragma omp parallel for schedule(dynamic, 1) private(col)
     for (int k = 0, j = ny-1; j >= 0; j--)
     {
-        fprintf(stdout, "\rRendering (%d spp) %5.2f%%", ns, 100.*k/(nx * ny));        
+        fprintf(stdout, "\rRendering (%d spp) %5.2f%% ", ns, 100.*k/(nx * ny));        
         for (int i = 0; i < nx; i++)
         {
             vec3 col(0, 0, 0);
@@ -127,7 +137,8 @@ int main()
             {
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
-                ray r(origin, low_left_corner + u * horizonal + v * vertical);
+                ray r = cam.get_ray(u, v);
+                //ray r(origin, low_left_corner + u * horizonal + v * vertical);
                 col += color(r, world, 0);
             }
             col /= float(ns);
@@ -137,7 +148,7 @@ int main()
     // Record end time
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;
-    printf("\n- Render Done! Time=%lf seconds\n", elapsed.count());
+    fprintf(stdout, "\n- Render Done! Time=%lf seconds\n", elapsed.count());
     save_to_ppm(pic, nx, ny, ns, int(elapsed.count()));
     delete[] pic;
     system("pause");
