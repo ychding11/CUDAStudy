@@ -11,7 +11,6 @@
 #include "sphere.h"
 #include "camera.h"
 
-#if 0
 float hit_sphere(const ray& r, const vec3& center, float radius)
 {
     vec3 oc = r.origin() - center;
@@ -29,6 +28,7 @@ float hit_sphere(const ray& r, const vec3& center, float radius)
     }
 }
 
+#if 0
 vec3 color(const ray& r, hitable *world)
 {
     hit_record rec;
@@ -70,6 +70,22 @@ vec3 color(const ray& r, hitable *world, int depth)
     }
 }
 
+vec3 color(const ray& r)
+{
+    float t = hit_sphere(r, vec3(0.f, 0.f, -1.f), 0.5f);
+    if (t > 0.f)
+    {
+        vec3 n = unit_vector(r.point_at_parameter(t) - vec3(0.f, 0.f, -1.f));
+        return 0.5f * vec3(n.x() + 1.f, n.y() + 1.f, n.z() + 1.f);
+    }
+    else
+    {
+        vec3 unit_direction = unit_vector(r.direction());
+        float t = 0.5*(unit_direction.y() + 1.0);
+        return (1.0 - t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
+    }
+}
+
 inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; }
 
 inline int  to_int(float x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
@@ -94,8 +110,8 @@ void save_to_ppm(vec3* output, int w, int h, int s, int t)
 int main()
 {
     int nx = 256;
-    int ny = 128;
-    int ns = 1000;
+    int ny = 256;
+    int ns = 300;
 
     srand48(time(NULL));
 
@@ -107,11 +123,11 @@ int main()
     vec3 vertical(0.f, 2.f, 0.f);
     vec3 origin(0.f, 0.f, 0.f);
 
-    vec3 lookfrom(-2, 4, 1);
+    vec3 lookfrom(-2, 2, 0);
     vec3 lookat(0, 0, -1);
     float dist_to_focus = 1.0;
     float aperture = 0.1;
-    camera cam(lookfrom, lookat, vec3(0, 1, 0), 90, float(nx) / float(ny), aperture, dist_to_focus);
+    camera cam(lookfrom, lookat, vec3(0, 1, 0), 45, float(nx) / float(ny), aperture, dist_to_focus);
 
 
     hitable *list[4];
@@ -138,8 +154,9 @@ int main()
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
                 ray r = cam.get_ray(u, v);
+                col += color(r);
                 //ray r(origin, low_left_corner + u * horizonal + v * vertical);
-                col += color(r, world, 0);
+                //col += color(r, world, 0);
             }
             col /= float(ns);
             pic[k++] = col;
