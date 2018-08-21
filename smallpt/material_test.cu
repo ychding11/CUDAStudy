@@ -86,19 +86,6 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
     y = SUB_GRID_Y * suby + y;
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
 
-#if 0
-    vec3 low_left_corner(-1.f, -1.f, -1.f);
-    vec3 horizonal(2.f, 0.f, 0.f);
-    vec3 vertical(0.f, 2.f, 0.f);
-    vec3 origin(0.f, 0.f, 0.f);
-
-    vec3 lookfrom(-2, 2, 0);
-    vec3 lookat(0, 0, -1);
-    float dist_to_focus = 1.0;
-    float aperture = 0.5;
-    camera cam(lookfrom, lookat, vec3(0.f, 1.f, 0.f), 45.f, float(nx) / float(ny), aperture, dist_to_focus);
-#endif
-
     curandState localState = states[i];
     vec3 *pic = (vec3*)output;
     vec3 col(0.f, 0.f, 0.f);
@@ -109,8 +96,6 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
         float u = float(x + dx) / float(nx);
         float v = float(y + dy) / float(ny);
         ray r = dcCamera.get_ray(u, v, localState);
-        //ray r = cam.get_ray(u, v, localState);
-        //ray r(origin, low_left_corner + u * horizonal + v * vertical);
         col += color(r);
     }
     states[i] = localState;
