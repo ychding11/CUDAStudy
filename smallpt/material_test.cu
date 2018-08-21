@@ -26,7 +26,7 @@ do{                                                    \
 } while(0)
 
 
-
+__constant__ camera dcCamera;
 
 __device__ float hit_sphere(const ray& r, const vec3& center, float radius)
 {
@@ -91,13 +91,13 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
     vec3 horizonal(2.f, 0.f, 0.f);
     vec3 vertical(0.f, 2.f, 0.f);
     vec3 origin(0.f, 0.f, 0.f);
-#endif
 
     vec3 lookfrom(-2, 2, 0);
     vec3 lookat(0, 0, -1);
     float dist_to_focus = 1.0;
     float aperture = 0.5;
     camera cam(lookfrom, lookat, vec3(0.f, 1.f, 0.f), 45.f, float(nx) / float(ny), aperture, dist_to_focus);
+#endif
 
     curandState localState = states[i];
     vec3 *pic = (vec3*)output;
@@ -108,7 +108,8 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
         float dy = curand_uniform(&localState);
         float u = float(x + dx) / float(nx);
         float v = float(y + dy) / float(ny);
-        ray r = cam.get_ray(u, v, localState);
+        ray r = dcCamera.get_ray(u, v, localState);
+        //ray r = cam.get_ray(u, v, localState);
         //ray r(origin, low_left_corner + u * horizonal + v * vertical);
         col += color(r);
     }
@@ -180,6 +181,13 @@ int TestSmallPTOnGPU(int width, int height, int samps)
     dim3 subgrid(SUB_GRID_X / block.x, SUB_GRID_Y / block.y, 1);
     dim3 grid( width/ block.x, height / block.y, 1);
 
+    vec3 lookfrom(-2, 2, 0);
+    vec3 lookat(0, 0, -1);
+    float dist_to_focus = 1.0;
+    float aperture = 0.5;
+    camera camera_h(lookfrom, lookat, vec3(0.f, 1.f, 0.f), 45.f, float(width) / float(height), aperture, dist_to_focus);
+
+    CUDA_CALL_CHECK(cudaMemcpyToSymbol(dcCamera, &camera_h, sizeof(camera),0,cudaMemcpyHostToDevice));
 
     CUDA_CALL_CHECK( cudaMalloc(&output_d, width * height * sizeof(float) * 3) );
         

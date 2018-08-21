@@ -22,6 +22,9 @@ __device__ vec3 random_in_unit_disk(curandState& randState)
 class camera
 {
     public:
+         __host__ __device__ camera()
+         {}
+
         // vfov is top to bottom in degrees
          __host__ __device__ camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect, float aperture, float focus_dist)
         { 
