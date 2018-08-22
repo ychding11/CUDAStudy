@@ -18,9 +18,11 @@
 #include "utils.h"
 
 
-vec3 color(const ray& r, hitable *world, int depth) {
+vec3 color(const ray& r, hitable *world, int depth)
+{
     hit_record rec;
-    if (world->hit(r, 0.001, MAXFLOAT, rec)) { 
+    if (world->hit(r, 0.001, MAXFLOAT, rec))
+    { 
         ray scattered;
         vec3 attenuation;
         vec3 emitted = rec.mat_ptr->emitted(rec.u, rec.v, rec.p);
@@ -175,13 +177,19 @@ hitable *cornell_smoke() {
     return new hitable_list(list,i);
 }
 
-hitable *cornell_box() {
+hitable *cornell_box()
+{
     hitable **list = new hitable*[8];
+
     int i = 0;
-    material *red = new lambertian( new constant_texture(vec3(0.65, 0.05, 0.05)) );
+
+    material *red   = new lambertian( new constant_texture(vec3(0.65, 0.05, 0.05)) );
     material *white = new lambertian( new constant_texture(vec3(0.73, 0.73, 0.73)) );
     material *green = new lambertian( new constant_texture(vec3(0.12, 0.45, 0.15)) );
+
+    // light source
     material *light = new diffuse_light( new constant_texture(vec3(15, 15, 15)) );
+
     list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
     list[i++] = new yz_rect(0, 555, 0, 555, 0, red);
     list[i++] = new xz_rect(213, 343, 227, 332, 554, light);
@@ -265,40 +273,56 @@ void save_to_ppm(vec3* output, int w, int h, int s, int t)
     system(display_image);
 }
 
+#include <vector>
+
+hitable* my_simple_light()
+{
+    //texture *pertext = new noise_texture(4);
+    texture *pertext = new constant_texture(vec3(0.8, 0.4, 0.2));
+    hitable **list = new hitable*[4];
+
+    list[0] =  new sphere(vec3(0,-1000, 0), 1000, new lambertian( pertext ));
+    list[1] =  new sphere(vec3(0, 2, 0), 2, new lambertian( pertext ));
+
+    // light sources
+    list[2] =  new sphere(vec3(0, 7, 0), 1, new diffuse_light( new constant_texture(vec3(4,4,4))));
+    list[3] =  new xy_rect(3, 5, 1, 3, -2, new diffuse_light(new constant_texture(vec3(4,4,4))));
+    return new hitable_list(list,4);
+}
+
 
 int main()
 {
-    int nx = 500;
-    int ny = 500;
-    int ns = 100;
+    int nx = 300;
+    int ny = 300;
+    int ns = 1000;
 
     srand48(time(NULL));
 
     vec3* pic = new vec3[nx * ny];
     assert(pic);
 
-    //hitable *list[5];
-    //float R = cos(M_PI/4);
-
     //hitable *world = random_scene();
     //hitable *world = two_spheres();
     //hitable *world = two_perlin_spheres();
     //hitable *world = earth();
     //hitable *world = simple_light();
-    hitable *world = cornell_box();
+    //hitable *world = cornell_box();
     //hitable *world = cornell_balls();
     //hitable *world = cornell_smoke();
     //hitable *world = cornell_final();
     //hitable *world = final();
+    
+    hitable *world = my_simple_light();
 
-    vec3 lookfrom(278, 278, -800);
+    //vec3 lookfrom(278, 278, -800);
     //vec3 lookfrom(478, 278, -600);
-    vec3 lookat(278,278,0);
-    //vec3 lookfrom(0, 0, 6);
-    //vec3 lookat(0,0,0);
-    float dist_to_focus = 10.0;
+    //vec3 lookat(278,278,0);
+    vec3 lookfrom(9, 6, 9);
+    vec3 lookat(0,2,0);
+    float dist_to_focus = 1.0;
     float aperture = 0.0;
-    float vfov = 40.0;
+    float vfov = 80.0;
 
     camera cam(lookfrom, lookat, vec3(0,1,0), vfov, float(nx)/float(ny), aperture, dist_to_focus, 0.0, 1.0);
 
