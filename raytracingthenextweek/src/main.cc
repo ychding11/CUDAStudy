@@ -301,7 +301,6 @@ hitable* my_simple_light(int nx, int ny, camera **cam)
 
 hitable* my_cornell_box(int nx, int ny, camera **cam)
 {
-
     vec3 lookfrom(278, 278, -800);
     vec3 lookat(278, 278, 0);
     float dist_to_focus = 10;
@@ -315,20 +314,15 @@ hitable* my_cornell_box(int nx, int ny, camera **cam)
     material *red   = new lambertian( new constant_texture(vec3(0.65, 0.05, 0.05)) );
     material *white = new lambertian( new constant_texture(vec3(0.73, 0.73, 0.73)) );
     material *green = new lambertian( new constant_texture(vec3(0.12, 0.45, 0.15)) );
-
-    // light source
     material *light = new diffuse_light( new constant_texture(vec3(15, 15, 15)) );
 
-    //list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
-    list[i++] = new yz_rect(0, 555, 0, 555, 555, green);
+    list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
     list[i++] = new yz_rect(0, 555, 0, 555, 0,     red);
 
-    //list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
-    list[i++] = new xz_rect(0, 555, 0, 555, 555, white);
+    list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
     list[i++] = new xz_rect(0, 555, 0, 555, 0,   white);
 
-    //list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
-    list[i++] = new xy_rect(0, 555, 0, 555, 555, white);
+    list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
 
     //light source
     list[i++] = new xz_rect(213, 343, 227, 332, 554, light);
@@ -343,7 +337,7 @@ int main()
 {
     int nx = 256;
     int ny = 256;
-    int ns = 100;
+    int ns = 1000;
 
     srand48(time(NULL));
 
