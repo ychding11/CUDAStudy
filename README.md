@@ -1,7 +1,9 @@
-# raytracing pictures
-- uniform sample 1000 spp, 300x300, takes about 123 seconds single thread.   
-   ![result](raytracingthenextweek/image/image-300-300-1000-122.png)   
-
+# raytracing pictures on CPU by single thread
+- uniform sample 1000 spp, 300x300, takes about 123 seconds.   
+   ![result](raytracingthenextweek/image/image-300-300-1000-122.png)      
+- uniform sample 300 spp, 256x256, takes about 54 seconds    
+   ![result](raytracinginoneweekend/image/image-256-256-300-53-refract-not-buggy.png)   
+    
 # CUDA issue
 
 ## Kernel Time out
