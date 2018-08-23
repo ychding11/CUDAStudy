@@ -1,3 +1,7 @@
+# raytracing pictures
+- uniform sample 1000 spp, 300x300, takes about 123 seconds single thread.   
+   ![result](raytracingthenextweek/image/image-300-300-1000-122.png)   
+
 # CUDA issue
 
 ## Kernel Time out
