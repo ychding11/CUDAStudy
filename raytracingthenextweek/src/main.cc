@@ -275,27 +275,75 @@ void save_to_ppm(vec3* output, int w, int h, int s, int t)
 
 #include <vector>
 
-hitable* my_simple_light()
+hitable* my_simple_light(int nx, int ny, camera **cam)
 {
+    vec3 lookfrom(9, 6, 9);
+    vec3 lookat(0,2,0);
+    float dist_to_focus = 1.0;
+    float aperture = 0.0;
+    float vfov = 80.0;
+    *cam = new camera(lookfrom, lookat, vec3(0,1,0), vfov, float(nx)/float(ny), aperture, dist_to_focus, 0.0, 1.0);
+
     //texture *pertext = new noise_texture(4);
     texture *pertext = new constant_texture(vec3(0.8, 0.4, 0.2));
     hitable **list = new hitable*[4];
 
-    list[0] =  new sphere(vec3(0,-1000, 0), 1000, new lambertian( pertext ));
-    list[1] =  new sphere(vec3(0, 2, 0), 2, new lambertian( pertext ));
+    int i = 0;
+    list[i++] =  new sphere(vec3(0,-1000, 0), 1000, new lambertian( pertext ));
+    list[i++] =  new sphere(vec3(0, 2, 0), 2, new lambertian( pertext ));
 
     // light sources
-    list[2] =  new sphere(vec3(0, 7, 0), 1, new diffuse_light( new constant_texture(vec3(4,4,4))));
-    list[3] =  new xy_rect(3, 5, 1, 3, -2, new diffuse_light(new constant_texture(vec3(4,4,4))));
-    return new hitable_list(list,4);
+    list[i++] =  new sphere(vec3(0, 7, 0), 1, new diffuse_light( new constant_texture(vec3(4,4,4))));
+    list[i++] =  new xy_rect(3, 5, 1, 3, -2, new diffuse_light(new constant_texture(vec3(4,4,4))));
+
+    return new hitable_list(list,i);
+}
+
+hitable* my_cornell_box(int nx, int ny, camera **cam)
+{
+
+    vec3 lookfrom(278, 278, -800);
+    vec3 lookat(278, 278, 0);
+    float dist_to_focus = 10;
+    float aperture = 0.0;
+    float vfov = 40.0;
+    *cam = new camera(lookfrom, lookat, vec3(0,1,0), vfov, float(nx)/float(ny), aperture, dist_to_focus, 0.0, 1.0);
+
+    int i = 0;
+    hitable **list = new hitable*[8];
+
+    material *red   = new lambertian( new constant_texture(vec3(0.65, 0.05, 0.05)) );
+    material *white = new lambertian( new constant_texture(vec3(0.73, 0.73, 0.73)) );
+    material *green = new lambertian( new constant_texture(vec3(0.12, 0.45, 0.15)) );
+
+    // light source
+    material *light = new diffuse_light( new constant_texture(vec3(15, 15, 15)) );
+
+    //list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
+    list[i++] = new yz_rect(0, 555, 0, 555, 555, green);
+    list[i++] = new yz_rect(0, 555, 0, 555, 0,     red);
+
+    //list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
+    list[i++] = new xz_rect(0, 555, 0, 555, 555, white);
+    list[i++] = new xz_rect(0, 555, 0, 555, 0,   white);
+
+    //list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
+    list[i++] = new xy_rect(0, 555, 0, 555, 555, white);
+
+    //light source
+    list[i++] = new xz_rect(213, 343, 227, 332, 554, light);
+
+    //list[i++] = new translate(new rotate_y(new box(vec3(0, 0, 0), vec3(165, 165, 165), white), -18), vec3(130,0,65));
+    //list[i++] = new translate(new rotate_y(new box(vec3(0, 0, 0), vec3(165, 330, 165), white),  15), vec3(265,0,295));
+    return new hitable_list(list,i);
 }
 
 
 int main()
 {
-    int nx = 300;
-    int ny = 300;
-    int ns = 1000;
+    int nx = 256;
+    int ny = 256;
+    int ns = 100;
 
     srand48(time(NULL));
 
@@ -313,8 +361,12 @@ int main()
     //hitable *world = cornell_final();
     //hitable *world = final();
     
-    hitable *world = my_simple_light();
+    camera *temp = nullptr;
+    //hitable *world = my_simple_light(nx, ny, &temp);
+    hitable *world = my_cornell_box(nx, ny, &temp);
+    camera & cam = *temp;
 
+#if 0
     //vec3 lookfrom(278, 278, -800);
     //vec3 lookfrom(478, 278, -600);
     //vec3 lookat(278,278,0);
@@ -325,6 +377,7 @@ int main()
     float vfov = 80.0;
 
     camera cam(lookfrom, lookat, vec3(0,1,0), vfov, float(nx)/float(ny), aperture, dist_to_focus, 0.0, 1.0);
+#endif
 
     fprintf(stdout, "- Start Rendering... %dx%d\n", nx, ny);
 
