@@ -3,7 +3,12 @@
    ![result](raytracingthenextweek/image/image-300-300-1000-122.png)      
 - uniform sample 300 spp, 256x256, takes about 54 seconds    
    ![result](raytracinginoneweekend/image/image-256-256-300-53-refract-not-buggy.png)   
+- uiniform 24 spp, 512x256, takes about 6 seconds 
+  - seems not correct: down side up, up side donw, sphere becomes not sphere.    
+  ![result](raytracinginoneweekend/image/image-512-256-24-5-bug-image.png)        
+ 
     
+
 # CUDA issue
 
 ## Kernel Time out
