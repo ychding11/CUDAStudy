@@ -9,6 +9,10 @@
 #include "helper_string.h"
 #include "ray.h"
 #include "camera.h"
+#include "hitable.h"
+#include "hitable_list.h"
+#include "material.h"
+#include "sphere.h"
 #include "utils.h"
 
 
@@ -61,6 +65,33 @@ __device__ vec3 color(const ray& r)
     }
 }
 
+
+__device__ 
+vec3 color(const ray& r, hitable *world, int depth, curandState& randState)
+{
+    hit_record rec;
+    if (world->hit(r, 0.001f, MAXFLOAT, rec))
+    {
+        ray scattered;
+        vec3 attenuation;
+        if (depth < 20 && rec.mat_ptr && rec.mat_ptr->scatter(r, rec, attenuation, scattered, randState))
+        {
+            return attenuation * color(scattered, world, depth + 1, randState);
+        }
+        else
+        {
+            return vec3(0.f, 0.f, 0.f);
+        }
+    }
+    else
+    {
+        vec3 unit_direction = unit_vector(r.direction());
+        float t = 0.5*(unit_direction.y() + 1.0);
+        return (1.0 - t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
+    }
+}
+
+
 #define SUB_GRID_X 256
 #define SUB_GRID_Y 256                
 #define BLOCK_X 8
@@ -86,6 +117,25 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
     y = SUB_GRID_Y * suby + y;
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
 
+    __shared__ lambertian lam1(vec3(0.1, 0.2, 0.5));
+    __shared__ lambertian lam2(vec3(0.8, 0.8, 0.0));
+    __shared__ metal      metal1(vec3(0.8, 0.6, 0.2), 1.f);
+    __shared__ dielectric die1(1.5f);
+
+     __shared__ sphere sphere1(vec3(0.f, 0.f, -1.f), 0.5f, &lam1);
+     __shared__ sphere sphere2(vec3(0.f, -100.5f, -1.f), 100.f, &lam2);
+     __shared__ sphere sphere3(vec3(1.f, 0.f, -1.f), 0.5f, &metal1);
+     __shared__ sphere sphere4(vec3(-1.f, 0.f, -1.f), 0.5f, &die1);
+
+    __shared__ hitable* list[4];
+    __shared__ hitable_list hit_list(list, 4);
+    __shared__ hitable * world = &hit_list;
+
+    list[0] = &sphere1;
+    list[1] = &sphere2;
+    list[2] = &sphere3;
+    list[3] = &sphere4;
+
     curandState localState = states[i];
     vec3 *pic = (vec3*)output;
     vec3 col(0.f, 0.f, 0.f);
@@ -96,7 +146,7 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
         float u = float(x + dx) / float(nx);
         float v = float(y + dy) / float(ny);
         ray r = dcCamera.get_ray(u, v, localState);
-        col += color(r);
+        col += color(r, world, 0, localState);
     }
     states[i] = localState;
     col /= float(ns);

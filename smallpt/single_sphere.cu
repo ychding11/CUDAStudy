@@ -176,9 +176,9 @@ int TestSmallPTOnGPU(int width, int height, int samps)
             {
                 setup_random_kernel <<< subgrid, block >>>(devStates, width, height, j, i); 
                 CUDA_CALL_CHECK(cudaGetLastError());
-                CUDA_CALL_CHECK(cudaDeviceSynchronize());
             }
         }
+                CUDA_CALL_CHECK(cudaDeviceSynchronize());
         auto finishRand = std::chrono::high_resolution_clock::now();
         elapsed = finishRand - startRand;
         printf("Random State Done! Time=%lf seconds\n", elapsed.count());

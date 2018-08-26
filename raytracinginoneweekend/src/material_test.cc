@@ -126,7 +126,7 @@ int main()
     vec3 lookfrom(-2, 2, 0);
     vec3 lookat(0, 0, -1);
     float dist_to_focus = 1.0;
-    float aperture = 0.1;
+    float aperture = 0.01;
     camera cam(lookfrom, lookat, vec3(0, 1, 0), 45, float(nx) / float(ny), aperture, dist_to_focus);
 
 
@@ -154,9 +154,8 @@ int main()
                 float u = float(i + drand48()) / float(nx);
                 float v = float(j + drand48()) / float(ny);
                 ray r = cam.get_ray(u, v);
-                col += color(r);
-                //ray r(origin, low_left_corner + u * horizonal + v * vertical);
-                //col += color(r, world, 0);
+                //col += color(r); // only test a hard coded sphere
+                col += color(r, world, 0);
             }
             col /= float(ns);
             pic[k++] = col;
