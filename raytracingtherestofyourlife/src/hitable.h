@@ -25,36 +25,48 @@ struct hit_record
     material *mat_ptr;
 };
 
-class hitable  {
+class hitable 
+{
     public:
         virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const = 0;
         virtual bool bounding_box(float t0, float t1, aabb& box) const = 0;
+
         virtual float  pdf_value(const vec3& o, const vec3& v) const  {return 0.0;}
         virtual vec3 random(const vec3& o) const {return vec3(1, 0, 0);}
 };
 
-class flip_normals : public hitable {
+class flip_normals : public hitable
+{
     public:
         flip_normals(hitable *p) : ptr(p) {}
-        virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const {
-            if (ptr->hit(r, t_min, t_max, rec)) {
+
+        virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const
+        {
+            if (ptr->hit(r, t_min, t_max, rec))
+            {
                 rec.normal = -rec.normal;
                 return true;
             }
             else
                 return false;
         }
-        virtual bool bounding_box(float t0, float t1, aabb& box) const {
+
+        virtual bool bounding_box(float t0, float t1, aabb& box) const
+        {
             return ptr->bounding_box(t0, t1, box);
         }
+
         hitable *ptr;
 };
 
-class translate : public hitable {
+class translate : public hitable
+{
     public:
         translate(hitable *p, const vec3& displacement) : ptr(p), offset(displacement) {}
+
         virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const;
         virtual bool bounding_box(float t0, float t1, aabb& box) const;
+
         hitable *ptr;
         vec3 offset; 
 };
@@ -81,9 +93,13 @@ bool translate::bounding_box(float t0, float t1, aabb& box) const {
 class rotate_y : public hitable {
     public:
         rotate_y(hitable *p, float angle);
+
         virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const;
-        virtual bool bounding_box(float t0, float t1, aabb& box) const {
-            box = bbox; return hasbox;}
+        virtual bool bounding_box(float t0, float t1, aabb& box) const
+        {
+            box = bbox; return hasbox;
+        }
+
         hitable *ptr;
         float sin_theta;
         float cos_theta;

@@ -9,10 +9,13 @@ class sphere: public hitable  {
     public:
         sphere() {}
         sphere(vec3 cen, float r, material *m) : center(cen), radius(r), mat_ptr(m)  {};
+
         virtual bool hit(const ray& r, float tmin, float tmax, hit_record& rec) const;
         virtual bool bounding_box(float t0, float t1, aabb& box) const;
+
         virtual float  pdf_value(const vec3& o, const vec3& v) const;
         virtual vec3 random(const vec3& o) const;
+
         vec3 center;
         float radius;
         material *mat_ptr;
@@ -29,7 +32,8 @@ float sphere::pdf_value(const vec3& o, const vec3& v) const {
         return 0;
 }
 
-vec3 sphere::random(const vec3& o) const {
+vec3 sphere::random(const vec3& o) const
+{
      vec3 direction = center - o;
      float distance_squared = direction.squared_length();
      onb uvw;
@@ -38,7 +42,8 @@ vec3 sphere::random(const vec3& o) const {
 }
 
 
-bool sphere::bounding_box(float t0, float t1, aabb& box) const {
+bool sphere::bounding_box(float t0, float t1, aabb& box) const
+{
     box = aabb(center - vec3(radius, radius, radius), center + vec3(radius, radius, radius));
     return true;
 }

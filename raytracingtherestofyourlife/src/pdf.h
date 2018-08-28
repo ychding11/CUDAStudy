@@ -34,39 +34,53 @@ vec3 random_in_unit_sphere() {
 
 
 
-class pdf  {
+class pdf
+{
     public:
         virtual float value(const vec3& direction) const = 0;
+
         virtual vec3 generate() const = 0;
+
         ~pdf() {}
 };
 
 
-class cosine_pdf : public pdf {
+class cosine_pdf : public pdf
+{
     public:
         cosine_pdf(const vec3& w) { uvw.build_from_w(w); }
-        virtual float value(const vec3& direction) const {
+
+        virtual float value(const vec3& direction) const
+        {
             float cosine = dot(unit_vector(direction), uvw.w());
             if (cosine > 0)
                 return cosine/M_PI;
             else
                 return 0;
         }
-        virtual vec3 generate() const  {
+
+        virtual vec3 generate() const 
+        {
             return uvw.local(random_cosine_direction());
         }
+
         onb uvw;
 };
 
 class hitable_pdf : public pdf {
     public:
         hitable_pdf(hitable *p, const vec3& origin) : ptr(p), o(origin) {} 
-        virtual float value(const vec3& direction) const {
+
+        virtual float value(const vec3& direction) const
+        {
             return ptr->pdf_value(o, direction);
         }
-        virtual vec3 generate() const {
+
+        virtual vec3 generate() const
+        {
             return ptr->random(o);
         }
+
         vec3 o;
         hitable *ptr;
 };
