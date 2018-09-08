@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{0a7fc545-4813-42fb-81ef-48cb7dce9a11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="effects">
+      <UniqueIdentifier>{12a5f101-0684-43f2-9a7f-331c7d0e6013}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rt">
+      <UniqueIdentifier>{0fe8778f-cda7-4d9e-b9f0-181ebfa2d3ec}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DX11EffectViewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rt\src\rt.cc">
+      <Filter>rt</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\Logger.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DX11EffectViewer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\aabb.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\aarect.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\box.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\bucamera.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\bvh.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\camera.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\constant_medium.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\foomaterial.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\hitable.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\hitable_list.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\material.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\moving_sphere.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\onb.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\pdf.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\perlin.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\ray.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\sphere.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\stb_image.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\stb_image_write.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\surface_texture.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\texture.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\utils.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="rt\src\vec3.h">
+      <Filter>rt</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="data\fullQuad.fx">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="effect\fishEye.hlsl">
+      <Filter>effects</Filter>
+    </None>
+    <None Include="effect\swirl.hlsl">
+      <Filter>effects</Filter>
+    </None>
+  </ItemGroup>
+</Project>
