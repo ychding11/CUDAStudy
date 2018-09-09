@@ -62,7 +62,7 @@ void cornell_box(hitable **scene, camera **cam, float aspect) {
     material *red = new lambertian( new constant_texture(vec3(0.65, 0.05, 0.05)) );
     material *white = new lambertian( new constant_texture(vec3(0.73, 0.73, 0.73)) );
     material *green = new lambertian( new constant_texture(vec3(0.12, 0.45, 0.15)) );
-    material *light = new diffuse_light( new constant_texture(vec3(15, 15, 15)) );
+    material *light = new diffuse_light( new constant_texture(vec3(10, 10, 10)) );
     list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
     list[i++] = new yz_rect(0, 555, 0, 555, 0, red);
     list[i++] = new flip_normals(new xz_rect(213, 343, 227, 332, 554, light));
@@ -108,9 +108,6 @@ void save_to_ppm(vec3* output, int w, int h, int s, int t)
 
 int update(void* data, int nx = 256, int ny = 256, int ns = 10)
 {
-   // srand48(time(NULL));
-
-    float invNs =   1.f / float(ns);
     vec3* pic = (vec3*)data; 
     assert(pic);
 
@@ -138,16 +135,15 @@ int update(void* data, int nx = 256, int ny = 256, int ns = 10)
         for (int i = 0; i < nx; i++)
         {
             vec3 col(0.f, 0.f, 0.f);
-            //for (int s=0; s < ns; s++)
+            float invNs = 4.f / float(ns);
+            for (int s=0; s < 4; s++)
             {
                 float u = float(i+drand48())/ float(nx);
                 float v = float(j+drand48())/ float(ny);
                 ray r = cam->get_ray(u, v);
                 vec3 p = r.point_at_parameter(2.0);
-                //col += de_nan(color(r, world, &hlist, 0));
-                col = de_nan(color(r, world, &hlist, 0));
+                col += de_nan(color(r, world, &hlist, 0));
             }
-            //col /= float(ns);
             col *= invNs;
             pic[k++] += col;
         }

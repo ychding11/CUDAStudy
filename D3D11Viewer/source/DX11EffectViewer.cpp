@@ -73,7 +73,7 @@ void DX11EffectViewer::UpdateTexture()
     if (m_imageSamples != sSamples)
     {
         update(m_ResultImage, m_imageWidth, m_imageHeight, m_imageSamples);
-        sSamples++ ;
+        sSamples += 4 ;
     }
 
 	D3D11_MAPPED_SUBRESOURCE mappedResource;

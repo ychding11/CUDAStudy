@@ -104,7 +104,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 }
 
 #define CLASS_NAME  L"TutorialWindowClass"
-#define WINDOW_NAME L"Compute Shader - Filters"
+#define WINDOW_NAME L"D3D11 Viewer - RT"
 
 HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
 {
