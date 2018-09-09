@@ -14,6 +14,7 @@
     <ProjectGuid>{D179A8A6-0609-4E03-AA00-A21C49DD3FED}</ProjectGuid>
     <RootNamespace>ComputeFilter</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <ProjectName>RTViewer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
