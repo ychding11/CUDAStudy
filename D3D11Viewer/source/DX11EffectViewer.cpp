@@ -1,6 +1,8 @@
 #include "DX11EffectViewer.h"
 #include "Logger.h"
 #include <io.h>
+#include <ctime>
+#include <cstdlib>
 
 void UpdateResult(float* image, int w, int h)
 {
@@ -25,12 +27,12 @@ int	DX11EffectViewer::initialize(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 
     CreateResultImageTextureAndView(pd3dDevice);
 	InitGraphics(pd3dDevice);
+	srand((unsigned int)time(NULL));
 	return 0;
 }
 
 void   DX11EffectViewer::CreateResultImageTextureAndView(ID3D11Device* pd3dDevice)
 {
-    // Need to Update
     if (m_resultImageTexture)m_resultImageTexture->Release(), m_resultImageTexture = NULL;
     D3D11_TEXTURE2D_DESC desc;
     ZeroMemory(&desc, sizeof(desc));
@@ -67,12 +69,11 @@ void   DX11EffectViewer::CreateResultImageTextureAndView(ID3D11Device* pd3dDevic
 
 void DX11EffectViewer::UpdateTexture()
 {
-    //UpdateResult(m_ResultImage, m_imageWidth, m_imageHeight);
     static int sSamples = 0;
     if (m_imageSamples != sSamples)
     {
         update(m_ResultImage, m_imageWidth, m_imageHeight, m_imageSamples);
-        sSamples = m_imageSamples;
+        sSamples++ ;
     }
 
 	D3D11_MAPPED_SUBRESOURCE mappedResource;

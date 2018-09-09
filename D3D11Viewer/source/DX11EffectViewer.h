@@ -46,14 +46,17 @@ public:
 		, m_pVertexLayout(NULL)
 		, m_imageWidth(256)
 		, m_imageHeight(256)
-		, m_imageSamples(1)
+		, m_imageSamples(100)
         , m_textureDataSize(m_imageHeight * m_imageWidth * sizeof(float) * 3)
     {
         m_ResultImage = new float[m_textureDataSize];
+        clearImage();
     }
 
     int     imageHeight() const { return m_imageHeight; }
     int     imageWidth()  const { return m_imageWidth;  }
+    void    clearImage() { ZeroMemory(m_ResultImage , m_textureDataSize * sizeof(float)); }
+    
 
 private:
 

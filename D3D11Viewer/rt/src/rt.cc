@@ -108,8 +108,9 @@ void save_to_ppm(vec3* output, int w, int h, int s, int t)
 
 int update(void* data, int nx = 256, int ny = 256, int ns = 10)
 {
-    srand48(time(NULL));
+   // srand48(time(NULL));
 
+    float invNs =   1.f / float(ns);
     vec3* pic = (vec3*)data; 
     assert(pic);
 
@@ -136,24 +137,26 @@ int update(void* data, int nx = 256, int ny = 256, int ns = 10)
         //fprintf(stdout, "\rRendering (%d spp) %5.2f%% ", ns, 100.*k / (nx * ny));
         for (int i = 0; i < nx; i++)
         {
-            vec3 col(0, 0, 0);
-            for (int s=0; s < ns; s++)
+            vec3 col(0.f, 0.f, 0.f);
+            //for (int s=0; s < ns; s++)
             {
                 float u = float(i+drand48())/ float(nx);
                 float v = float(j+drand48())/ float(ny);
                 ray r = cam->get_ray(u, v);
                 vec3 p = r.point_at_parameter(2.0);
-                col += de_nan(color(r, world, &hlist, 0));
+                //col += de_nan(color(r, world, &hlist, 0));
+                col = de_nan(color(r, world, &hlist, 0));
             }
-            col /= float(ns);
-            pic[k++] = col;
+            //col /= float(ns);
+            col *= invNs;
+            pic[k++] += col;
         }
     }
     // Record end time
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;
     //fprintf(stdout, "\n- Render Done! Time=%lf seconds\n", elapsed.count());
-    save_to_ppm(pic, nx, ny, ns, int(elapsed.count()));
+    //save_to_ppm(pic, nx, ny, ns, int(elapsed.count()));
     return 0;
 }
 
