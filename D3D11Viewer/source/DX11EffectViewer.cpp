@@ -1,8 +1,7 @@
-#include "DX11EffectViewer.h"
-#include "Logger.h"
 #include <io.h>
 #include <ctime>
 #include <cstdlib>
+#include "DX11EffectViewer.h"
 
 void UpdateResult(float* image, int w, int h)
 {
@@ -18,6 +17,7 @@ void UpdateResult(float* image, int w, int h)
     }
 }
 
+// external definition
 int update(void* data, int nx = 256, int ny = 256, int ns = 10);
 
 int	DX11EffectViewer::initialize(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
@@ -34,6 +34,7 @@ int	DX11EffectViewer::initialize(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 void   DX11EffectViewer::CreateResultImageTextureAndView(ID3D11Device* pd3dDevice)
 {
     if (m_resultImageTexture)m_resultImageTexture->Release(), m_resultImageTexture = NULL;
+
     D3D11_TEXTURE2D_DESC desc;
     ZeroMemory(&desc, sizeof(desc));
     desc.Width = m_imageWidth;
@@ -47,11 +48,7 @@ void   DX11EffectViewer::CreateResultImageTextureAndView(ID3D11Device* pd3dDevic
     desc.MipLevels = 1;
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    if ( FAILED( pd3dDevice->CreateTexture2D(&desc, NULL, &m_resultImageTexture)))
-    {
-        Logger::getLogger() << "-  Failed to create result image texture.\n" << "\n";
-		exit(1);
-    }
+    CHECK_D3D11_CALL( pd3dDevice->CreateTexture2D(&desc, NULL, &m_resultImageTexture));
 
     if (m_resultImageTextureView)m_resultImageTextureView->Release(), m_resultImageTextureView = NULL;
     D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
@@ -60,11 +57,7 @@ void   DX11EffectViewer::CreateResultImageTextureAndView(ID3D11Device* pd3dDevic
     viewDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2D;
     viewDesc.Texture2D.MipLevels = 1;
     viewDesc.Texture2D.MostDetailedMip = 0;
-    if (FAILED(pd3dDevice->CreateShaderResourceView(m_resultImageTexture, &viewDesc, &m_resultImageTextureView)))
-    {
-        Logger::getLogger() << "-  Failed to create result image texture resource view.\n" << "\n";
-		exit(1);
-    }
+    CHECK_D3D11_CALL(pd3dDevice->CreateShaderResourceView(m_resultImageTexture, &viewDesc, &m_resultImageTextureView));
 }
 
 void DX11EffectViewer::UpdateTexture()
@@ -77,14 +70,11 @@ void DX11EffectViewer::UpdateTexture()
     }
 
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-    if (m_pImmediateContext->Map(m_resultImageTexture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource) != S_OK)
-    {
-        Logger::getLogger() << "-  Failed to map resource view.\n" << "\n";
-		exit(1);
-    }
-	memcpy(mappedResource.pData,m_ResultImage, m_textureDataSize); // copy from GPU meory into CPU memory.
+    CHECK_D3D11_CALL(m_pImmediateContext->Map(m_resultImageTexture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource));
+	memcpy(mappedResource.pData, m_ResultImage, m_textureDataSize); // copy from GPU meory into CPU memory.
 	m_pImmediateContext->Unmap(m_resultImageTexture, 0);
 }
+
 void DX11EffectViewer::Render(ID3D11DeviceContext* pImmediateContext ) 
 {
     assert(pImmediateContext == m_pImmediateContext);
@@ -111,7 +101,6 @@ void DX11EffectViewer::Render(ID3D11DeviceContext* pImmediateContext )
  */
 void DX11EffectViewer::InitGraphics(ID3D11Device* pd3dDevice)
 {
-	HRESULT hr;
 	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 
 #if defined( DEBUG ) || defined( _DEBUG )
@@ -139,65 +128,40 @@ void DX11EffectViewer::InitGraphics(ID3D11Device* pd3dDevice)
 	bd.Usage     = D3D11_USAGE_DEFAULT;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER; //bind the buffer to input-assembler stage.
 	bd.ByteWidth = sizeof( vertices);
-	hr = pd3dDevice->CreateBuffer( &bd, &InitData, &m_pVertexBuffer );
-	if( FAILED( hr ) )
-	{	
-        Logger::getLogger() << "- Failed to create vertex buffer.\n" << "\n";
-		exit(1);
-	}
+    CHECK_D3D11_CALL(pd3dDevice->CreateBuffer( &bd, &InitData, &m_pVertexBuffer ));
 
 	ID3DBlob* pErrorBlob;
 	ID3DBlob* pVSBlob = NULL;
-	if( FAILED(D3DCompileFromFile(L"./data/fullQuad.fx", NULL, NULL, "VS", "vs_4_0", dwShaderFlags, 0, &pVSBlob, &pErrorBlob) ) )
+	CHECK_D3D11_CALL(D3DCompileFromFile(L"./data/fullQuad.fx", NULL, NULL, "VS", "vs_4_0", dwShaderFlags, 0, &pVSBlob, &pErrorBlob));
+	if( pErrorBlob )
 	{
-		if( pErrorBlob )
-		{
-			OutputDebugStringA( (char*)pErrorBlob->GetBufferPointer() );
-			pErrorBlob->Release();
-		}
-        Logger::getLogger() << "- Failed to compile vertex shader: /data/fullQuad.fx\n" << "\n";
-		exit(1);
+		OutputDebugStringA( (char*)pErrorBlob->GetBufferPointer() );
+		pErrorBlob->Release();
+        exit(1);
 	}
-	if( pErrorBlob ) pErrorBlob->Release(); // is this check a must ?
-	hr = pd3dDevice->CreateVertexShader( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &m_pVertexShader );
-	if( FAILED(hr) )
-	{	
-        Logger::getLogger() << "- Failed to create vertex shader object." << "\n";
-		exit(1);
-	}
+
+    CHECK_D3D11_CALL(pd3dDevice->CreateVertexShader( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &m_pVertexShader));
 
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
-	hr = pd3dDevice->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_pVertexLayout);
-	pVSBlob->Release();
-	if (FAILED(hr))
-	{
-        Logger::getLogger() << "- Failed to layout object\n" << "\n";
-		exit(1);
-	}
+    CHECK_D3D11_CALL(pd3dDevice->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_pVertexLayout));
+	if (pVSBlob) pVSBlob->Release();
 
 	// Compile pixel shader
 	ID3DBlob* pPSBlob = NULL;
-	if( FAILED( D3DCompileFromFile(L"./data/fullQuad.fx", NULL, NULL, "psSampleResultImage", "ps_4_0", dwShaderFlags, 0, &pPSBlob, &pErrorBlob) ) )
+	CHECK_D3D11_CALL( D3DCompileFromFile(L"./data/fullQuad.fx", NULL, NULL, "psSampleResultImage", "ps_4_0", dwShaderFlags, 0, &pPSBlob, &pErrorBlob) );
+	if( pErrorBlob )
 	{
-		if( pErrorBlob )
-		{
-			OutputDebugStringA( (char*)pErrorBlob->GetBufferPointer() );
-			pErrorBlob->Release();
-		}
-        Logger::getLogger() << "- Failed to compile pixel shader: /data/fullQuad.fx\n" << "\n";
-		exit(1);
+		OutputDebugStringA( (char*)pErrorBlob->GetBufferPointer() );
+		pErrorBlob->Release();
+        exit(1);
 	}
-	hr = pd3dDevice->CreatePixelShader( pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPixelShaderResultImage );
-	pPSBlob->Release();
-	if( FAILED( hr ) )
-	{	
-        Logger::getLogger() << "- Failed to create pixel shader object." << "\n";
-		exit(1);
-	}
+
+    CHECK_D3D11_CALL(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPixelShaderResultImage));
+	if (pPSBlob) pPSBlob->Release();
 
 	// Create sampler state
 	D3D11_SAMPLER_DESC sampDesc;
@@ -208,14 +172,9 @@ void DX11EffectViewer::InitGraphics(ID3D11Device* pd3dDevice)
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampDesc.MinLOD = 0; sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	hr = pd3dDevice->CreateSamplerState( &sampDesc, &m_pSamplerLinear );
-	if (FAILED(hr))
-	{
-        Logger::getLogger() << "- Failed to Create Texture Sampler Object.\n" << "\n";
-		exit(1);
-	}
+    CHECK_D3D11_CALL(pd3dDevice->CreateSamplerState( &sampDesc, &m_pSamplerLinear));
 
-    Logger::getLogger() << "- InitGraphics OK.\n" << "\n";
+    MY_DEBUG_INFO( "- InitGraphics OK.\n" );
 }
 
 

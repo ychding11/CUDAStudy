@@ -14,6 +14,20 @@
 using namespace DirectX;
 
 
+#define CHECK_D3D11_CALL(x)                           \
+do{                                                   \
+    LRESULT ret = (x);                                \
+    if((ret) != S_OK)                                 \
+    {                                                 \
+        char buf[512];                                \
+        sprintf_s(buf, 512, "- D3D11 Call Fail @%s:%d\t  Expression: %s  Code:%d \n",__FILE__,__LINE__, #x, (ret) );  \
+        OutputDebugStringA(buf);                      \
+    }                                                 \
+} while(0)
+
+#define MY_DEBUG_INFO OutputDebugStringA
+
+
 // Safe Release Function
 template <class T>
 void SafeRelease(T **ppT)
@@ -46,7 +60,7 @@ public:
 		, m_pVertexLayout(NULL)
 		, m_imageWidth(256)
 		, m_imageHeight(256)
-		, m_imageSamples(1000)
+		, m_imageSamples(200)
         , m_textureDataSize(m_imageHeight * m_imageWidth * sizeof(float) * 3)
     {
         m_ResultImage = new float[m_textureDataSize];

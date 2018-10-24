@@ -1,7 +1,6 @@
 #include <windows.h>
 #include <d3d11.h>                                 
 #include "DX11EffectViewer.h"
-#include "Logger.h"
 
 
 DX11EffectViewer	application;
@@ -253,7 +252,6 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 	}
     
     application.Destory();
-    Logger::flushLogger();
 
     SAFE_RELEASE(pRenderTargetView );
     SAFE_RELEASE(pSwapChain );
