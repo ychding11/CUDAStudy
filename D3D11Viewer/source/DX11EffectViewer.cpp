@@ -18,6 +18,7 @@ void UpdateResult(float* image, int w, int h)
 }
 
 // external definition
+// definition is in rt 
 int update(void* data, int nx = 256, int ny = 256, int ns = 10);
 
 int	DX11EffectViewer::initialize(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)

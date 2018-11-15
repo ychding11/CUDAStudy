@@ -28,14 +28,17 @@ class aabb {
             return true;
         }
 
-        float area() const {
+        // surface area of a cube
+        float area() const
+        {
                float a = _max.x() - _min.x();
                float b = _max.y() - _min.y();
                float c = _max.z() - _min.z();
                return 2*(a*b + b*c + c*a);
         }
 
-        int longest_axis() const {
+        int longest_axis() const
+        {
                float a = _max.x() - _min.x();
                float b = _max.y() - _min.y();
                float c = _max.z() - _min.z();
