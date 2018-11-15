@@ -106,6 +106,8 @@ void save_to_ppm(vec3* output, int w, int h, int s, int t)
 #endif
 }
 
+// export to other module.
+// assure param data is valid
 int update(void* data, int nx = 256, int ny = 256, int ns = 10)
 {
     vec3* pic = (vec3*)data; 
