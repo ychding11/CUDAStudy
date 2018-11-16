@@ -17,6 +17,13 @@
 #include "pdf.h"
 #include "utils.h"
 
+//
+// World is a container of all primitives in a scene
+// Camera is a ray generator
+// Light  is a emmisive primitive
+//
+
+
 inline vec3 de_nan(const vec3& c)
 {
     vec3 temp = c;
