@@ -33,6 +33,12 @@ inline vec3 de_nan(const vec3& c)
     return temp;
 }
 
+// parameter world is a bvh node, is a container, the current design is not good.
+// parameter light_shape is address of an array. the current desing is not good.
+// ray depth is hard coded now, is not good.
+//
+// calculate "emission" and "scattering" at surface point
+// specular case is handled in special case.
 vec3 color(const ray& r, hitable *world, hitable *light_shape, int depth)
 {
     hit_record hrec;

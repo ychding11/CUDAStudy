@@ -61,10 +61,14 @@ class material  {
         }
 };
 
-class dielectric : public material { 
+class dielectric : public material
+{ 
     public:
+
         dielectric(float ri) : ref_idx(ri) {}
-        virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const {
+
+        virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const override
+        {
             srec.is_specular = true;
             srec.pdf_ptr = 0;
             srec.attenuation = vec3(1.0, 1.0, 1.0); 
@@ -124,11 +128,12 @@ class metal : public material
 
 
 
-class lambertian : public material {
+class lambertian : public material
+{
     public:
         lambertian(texture *a) : albedo(a) {}
 
-        float scattering_pdf(const ray& r_in, const hit_record& rec, const ray& scattered) const
+        virtual float scattering_pdf(const ray& r_in, const hit_record& rec, const ray& scattered) const override
         {
             float cosine = dot(rec.normal, unit_vector(scattered.direction()));
             if (cosine < 0) 
@@ -136,7 +141,7 @@ class lambertian : public material {
             return cosine / M_PI;
         }
 
-        bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const
+        virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const override
         {
             srec.is_specular = false;
             srec.attenuation = albedo->value(hrec.u, hrec.v, hrec.p);
