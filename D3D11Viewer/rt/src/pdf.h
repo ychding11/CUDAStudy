@@ -3,7 +3,9 @@
 #include "onb.h"
 
 
-inline vec3 random_cosine_direction() {
+// help function
+inline vec3 random_cosine_direction()
+{
     float r1 = drand48();
     float r2 = drand48();
     float z = sqrt(1-r2);
@@ -13,7 +15,8 @@ inline vec3 random_cosine_direction() {
     return vec3(x, y, z);
 }
 
-inline vec3 random_to_sphere(float radius, float distance_squared) {
+inline vec3 random_to_sphere(float radius, float distance_squared)
+{
     float r1 = drand48();
     float r2 = drand48();
     float z = 1 + r2*(sqrt(1-radius*radius/distance_squared) - 1);
@@ -32,19 +35,21 @@ vec3 random_in_unit_sphere() {
     return p;
 }
 
-
-
+// abstract class
 class pdf
 {
     public:
+        // calculate pdf of a certain direction
         virtual float value(const vec3& direction) const = 0;
 
+        // randomly generate a direction
         virtual vec3 generate() const = 0;
 
         ~pdf() {}
 };
 
 
+// has-a tanget space like coordinate
 class cosine_pdf : public pdf
 {
     public:
@@ -67,16 +72,17 @@ class cosine_pdf : public pdf
         onb uvw;
 };
 
-class hitable_pdf : public pdf {
+class hitable_pdf : public pdf
+{
     public:
         hitable_pdf(hitable *p, const vec3& origin) : ptr(p), o(origin) {} 
 
-        virtual float value(const vec3& direction) const
+        virtual float value(const vec3& direction) const override
         {
             return ptr->pdf_value(o, direction);
         }
 
-        virtual vec3 generate() const
+        virtual vec3 generate() const override
         {
             return ptr->random(o);
         }
@@ -85,18 +91,27 @@ class hitable_pdf : public pdf {
         hitable *ptr;
 };
 
-class mixture_pdf : public pdf {
+// only mix 2 pdfs with equal weigh
+class mixture_pdf : public pdf
+{
     public:
         mixture_pdf(pdf *p0, pdf *p1 ) { p[0] = p0; p[1] = p1; }
-        virtual float value(const vec3& direction) const {
+
+        // this is not good
+        virtual float value(const vec3& direction) const override
+        {
             return 0.5 * p[0]->value(direction) + 0.5 *p[1]->value(direction);
         }
-        virtual vec3 generate() const {
+
+        // randomly pick a pdf to generate a direction.
+        virtual vec3 generate() const override
+        {
             if (drand48() < 0.5)
                 return p[0]->generate();
             else
                 return p[1]->generate();
         }
+
         pdf *p[2];
 };
 
