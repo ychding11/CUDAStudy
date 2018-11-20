@@ -17,6 +17,13 @@
 #include "pdf.h"
 #include "utils.h"
 
+#define PARALLEL
+#ifdef PARALLEL
+#include "parallel.h"
+#include "stats.h"
+#include "progressreporter.h"
+#endif
+
 //
 // World is a container of all primitives in a scene
 // Camera is a ray generator
@@ -144,25 +151,62 @@ int update(void* data, int nx = 256, int ny = 256, int ns = 10)
     // Record start time                          
     auto start = std::chrono::high_resolution_clock::now();
 
+#ifdef PARALLEL
+    parallelInit();
+
+    // Main Thread also does jobs
+    {
+        int64_t N = ny;
+        //ProgressReporter reporter(N, "Progressing");
+        ParallelFor([&](int64_t j){
+            for (int i = 0; i < nx; i++)
+            {
+                vec3 col(0.f, 0.f, 0.f);
+                const float invNs = 1.f / float(ns);
+                for (int s=0; s < 64; s++)
+                {
+                    float u = float(i+drand48())/ float(nx);
+                    float v = float(j+drand48())/ float(ny);
+                    ray r = cam->get_ray(u, v);
+                    vec3 p = r.point_at_parameter(2.0);
+                    col += invNs * de_nan(color(r, world, &hlist, 0));
+                }
+                pic[nx *j + i] += col;
+            }
+            //reporter.update();
+        }, N, 32);
+        //reporter.done();
+    }
+
+    MergeWorkerThreadStats();
+    ReportThreadStats();
+    //PrintStats(stdout);
+    ClearStats();
+    parallelCleanup();
+
+#else
     for (int k = 0, j = ny-1; j >= 0; j--)
     {
         //fprintf(stdout, "\rRendering (%d spp) %5.2f%% ", ns, 100.*k / (nx * ny));
         for (int i = 0; i < nx; i++)
         {
             vec3 col(0.f, 0.f, 0.f);
-            float invNs = 4.f / float(ns);
+            const float invNs = 1.f / float(ns);
             for (int s=0; s < 4; s++)
             {
                 float u = float(i+drand48())/ float(nx);
                 float v = float(j+drand48())/ float(ny);
                 ray r = cam->get_ray(u, v);
                 vec3 p = r.point_at_parameter(2.0);
-                col += de_nan(color(r, world, &hlist, 0));
+                col += invNs * de_nan(color(r, world, &hlist, 0));
             }
-            col *= invNs;
+            //col *= invNs;
             pic[k++] += col;
         }
     }
+
+#endif
+
     // Record end time
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;

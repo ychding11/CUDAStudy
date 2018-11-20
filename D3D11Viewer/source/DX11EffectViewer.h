@@ -60,7 +60,7 @@ public:
 		, m_pVertexLayout(NULL)
 		, m_imageWidth(256)
 		, m_imageHeight(256)
-		, m_imageSamples(200)
+		, m_imageSamples(256)
         , m_textureDataSize(m_imageHeight * m_imageWidth * sizeof(float) * 3)
     {
         m_ResultImage = new float[m_textureDataSize];

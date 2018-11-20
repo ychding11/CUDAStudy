@@ -43,7 +43,7 @@ static std::condition_variable reportDoneCondition;
 static std::mutex reportDoneMutex;
 
 // Used for log
-static std::shared_ptr<spdlog::logger> mylogger;
+static std::shared_ptr<spdlog::logger> mylogger = nullptr;
 
 static int numSystemCores(void)
 {
@@ -64,7 +64,6 @@ public:
         ,mMaxIndex(maxIndex)
         ,mChunkSize(chunkSize)
 	{
-		//std::cout << "ParallelForLoop, max idex=" << mMaxIndex << " Constructed.\n";
         mylogger->info("ParallelForLoop, maxindex={} mChunkSize={} Constructed.", mMaxIndex, mChunkSize);
 	}
 
@@ -81,7 +80,6 @@ public:
 public:
     bool Finished(void) const
     {
-		//std::cout << "ParallelForLoop, max idex=" << mMaxIndex << " Finished.";
         return mNextIndex >= mMaxIndex && mActiveWorkers == 0;
     }
 
@@ -90,7 +88,6 @@ public:
 // worker thread
 void workerThread(int tIndex)
 {
-	//std::cout << "Thread " << tIndex << " starting.\n";
     mylogger->info("Thread {} starting.", tIndex);
     threadIndex = tIndex; // thread local
     
@@ -121,7 +118,7 @@ void workerThread(int tIndex)
             loop.mActiveWorkers++;
 
             lock.unlock();
-			//std::cout << "Thread " << threadIndex << "starts work on [" << indexStart << ", " << indexEnd << "]\n";
+
             mylogger->info("Thread {} starts work on [{}, {}].", threadIndex, indexStart, indexEnd);
             for (uint64_t i = indexStart; i < indexEnd; ++i)
             {
@@ -132,7 +129,6 @@ void workerThread(int tIndex)
             if (loop.Finished()) workListCondition.notify_all();
        }
     }
-	//std::cout << "Thread " << tIndex << " exiting.\n";
     mylogger->info("Thread {} exiting.", tIndex);
 }
 
@@ -169,7 +165,6 @@ void ParallelFor(std::function<void(int64_t)> func, int64_t count, int chunkSize
 
         lock.unlock(); // release lock after update loop parameter.
         
-		//std::cout << "Main Thread " << "starts work on [" << indexStart << ", " << indexEnd << "]\n";
         mylogger->info("Main Thread starts work on [{}, {}].", indexStart, indexEnd);
         for (uint64_t i = indexStart; i < indexEnd; ++i)
         {
@@ -197,7 +192,7 @@ void parallelInit(void)
 #endif
     try
     {
-        mylogger = spdlog::basic_logger_mt("mylogger", "basic-log.txt");
+        if (!mylogger) mylogger = spdlog::basic_logger_mt("mylogger", "basic-log.txt");
     }
     catch (const spdlog::spdlog_ex &ex)
     {
@@ -210,12 +205,9 @@ void parallelInit(void)
     if (threads.size() > 0) return;
     int nThreads = maxThreadIndex();
     threadIndex = 0; // thread local variable.
-	//if (nThreads > 8) nThreads = 8; //debug only.
     for (int i = 0; i < nThreads - 1; ++i)
         threads.push_back(std::thread(workerThread, i+1));
-	//printf("- Spaw %d worker threads.\n", nThreads - 1);
-	//std::cout << "Parallel module init Ok.\n";
-    mylogger->info("- Spaw {} worker threads.", nThreads - 1);
+    mylogger->info("Spaw {} worker threads.", nThreads - 1);
     mylogger->info("Parallel module init Ok.");
 }
 
@@ -234,7 +226,6 @@ void parallelCleanup(void)
     for (std::thread &thread : threads) thread.join();
     threads.erase(threads.begin(), threads.end());
     shutdowThread = false;
-	//std::cout << "Parallel module cleanup Ok.";
     mylogger->info("Parallel module cleanup Ok.");
 }
 
@@ -259,9 +250,7 @@ void MergeWorkerThreadStats()
 
 
 
-
-#define LOCAL_TEST
-
+//#define LOCAL_TEST
 #ifdef LOCAL_TEST
 #include <assert.h>
 #include "progressreporter.h"
