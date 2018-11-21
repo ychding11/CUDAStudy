@@ -22,6 +22,9 @@
     <Filter Include="rt">
       <UniqueIdentifier>{0fe8778f-cda7-4d9e-b9f0-181ebfa2d3ec}</UniqueIdentifier>
     </Filter>
+    <Filter Include="parallel">
+      <UniqueIdentifier>{88ad1a5d-eab6-4170-8b28-50d8896af865}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -35,6 +38,15 @@
     </ClCompile>
     <ClCompile Include="rt\src\rt.cc">
       <Filter>rt</Filter>
+    </ClCompile>
+    <ClCompile Include="Parallel\src\parallel.cpp">
+      <Filter>parallel</Filter>
+    </ClCompile>
+    <ClCompile Include="Parallel\src\progressreporter.cpp">
+      <Filter>parallel</Filter>
+    </ClCompile>
+    <ClCompile Include="Parallel\src\stats.cpp">
+      <Filter>parallel</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -112,6 +124,18 @@
     </ClInclude>
     <ClInclude Include="rt\src\vec3.h">
       <Filter>rt</Filter>
+    </ClInclude>
+    <ClInclude Include="Parallel\src\parallel.h">
+      <Filter>parallel</Filter>
+    </ClInclude>
+    <ClInclude Include="Parallel\src\progressreporter.h">
+      <Filter>parallel</Filter>
+    </ClInclude>
+    <ClInclude Include="Parallel\src\stats.h">
+      <Filter>parallel</Filter>
+    </ClInclude>
+    <ClInclude Include="Parallel\src\stringprint.h">
+      <Filter>parallel</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
