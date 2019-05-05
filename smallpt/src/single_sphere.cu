@@ -178,7 +178,7 @@ int TestSmallPTOnGPU(int width, int height, int samps)
                 CUDA_CALL_CHECK(cudaGetLastError());
             }
         }
-                CUDA_CALL_CHECK(cudaDeviceSynchronize());
+        CUDA_CALL_CHECK(cudaDeviceSynchronize());
         auto finishRand = std::chrono::high_resolution_clock::now();
         elapsed = finishRand - startRand;
         printf("Random State Done! Time=%lf seconds\n", elapsed.count());
@@ -221,8 +221,8 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 
 int main(int argc, char *argv[])
 {
-    ///int width = 512, height = 512, samps = 1024;
-    int width = 1024, height = 1024, samps = 1024;
+    int width = 512, height = 512, samps = 1024;
+    //int width = 1024, height = 1024, samps = 256;
     
     if (argc > 1)
     {

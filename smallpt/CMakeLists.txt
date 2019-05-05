@@ -65,15 +65,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
 
-SET(LINK_OPTIONS " ")
-SET(EXE_NAME "single_sphere")
-
-#ADD_EXECUTABLE(${EXE_NAME} "src/single_sphere.cu")
-#Use static cuda link
-cuda_add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/single_sphere.cu" ${SRC_FILES})
-#cuda_add_executable("material_test" "${CMAKE_SOURCE_DIR}/src/material_test.cu" ${SRC_FILES})
-cuda_add_executable("small_pt" "${CMAKE_SOURCE_DIR}/src/smallptCUDA.cu" ${SRC_FILES})
-
 #--------------------------------------------------------------------
 # preproc
 #--------------------------------------------------------------------
@@ -83,18 +74,25 @@ add_definitions(-DBX_CONFIG_ENABLE_MSVC_LEVEL4_WARNINGS=1)
 add_definitions(-D__STDC_LIMIT_MACROS)
 add_definitions(-D__STDC_CONSTANT_MACROS)
 add_definitions(-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS)
+
 if(MSVC)
-add_definitions(-DWIN32)
-add_definitions(-D_WIN32)
+#add_definitions(-DWIN32)
+#add_definitions(-D_WIN32)
 #add_definitions(-DNOMINMAX)
 endif()
+
 add_definitions(-DUSE_DL_PREFIX)
 add_definitions(-DGLEW_STATIC)
 
+SET(LINK_OPTIONS " ")
+
+####################################### Add Executable ###########################################
+#Use static cuda link
+SET(EXE_NAME "single_sphere")
+cuda_add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/single_sphere.cu" ${SRC_FILES})
 #--------------------------------------------------------------------
 # output dirs
 #--------------------------------------------------------------------
-
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin )
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin )
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR}/bin )
@@ -103,24 +101,33 @@ set_target_properties(${EXE_NAME} PROPERTIES RELWITHDEBINFO_POSTFIX "RelWithDebI
 set_target_properties(${EXE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 #--------------------------------------------------------------------
-# Hide the console window in visual studio projects
+# Open the console window in visual studio projects
 #--------------------------------------------------------------------
-if(ENABLE_HIDECONSOLE_BUILD)
 if(MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
-endif()
-endif()
-
-if(WINDOWS)
-set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")
-set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
 endif()
 
-if(ENABLE_HIDECONSOLE_BUILD)
-MESSAGE(STATUS "Console is hidden")
-else()
-MESSAGE(STATUS "Console is visible")
+####################################### Add Executable ###########################################
+#Use static cuda link
+SET(EXE_NAME "smallptCUDA")
+cuda_add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/smallptCUDA.cu" ${SRC_FILES})
+#--------------------------------------------------------------------
+# output dirs
+#--------------------------------------------------------------------
+set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin )
+set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin )
+set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR}/bin )
+set_target_properties(${EXE_NAME} PROPERTIES DEBUG_POSTFIX "_d")
+set_target_properties(${EXE_NAME} PROPERTIES RELWITHDEBINFO_POSTFIX "RelWithDebInfo")
+set_target_properties(${EXE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+
+#--------------------------------------------------------------------
+# Open the console window in visual studio projects
+#--------------------------------------------------------------------
+if(MSVC)
+set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
 endif()
 
 #######################################################################################
