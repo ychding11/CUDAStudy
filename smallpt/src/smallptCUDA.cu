@@ -26,7 +26,8 @@ do{                                                    \
 #define M_PI 3.14159265359f  // pi
 
 // __device__ : executed on the device (GPU) and callable only from the device
-struct Ray { 
+struct Ray
+{ 
  float3 orig; // ray origin
  float3 dir;  // ray direction 
  __device__ Ray(float3 o_, float3 d_) : orig(o_), dir(d_) {} 
@@ -34,15 +35,14 @@ struct Ray {
 
 enum Refl_t { DIFF, SPEC, REFR };  // material types, used in radiance(), only DIFF used here
 
-struct Sphere {
-
+struct Sphere
+{
  float rad;            // radius 
  float3 pos, emi, col; // position, emission, colour 
  Refl_t refl;          // reflection type (e.g. diffuse)
 
 __device__ float intersect_sphere(const Ray &r) const 
 { 
-          
  // ray/sphere intersection
  // returns distance t to intersection point, 0 if no hit  
  // ray equation: p(x,y,z) = ray.orig + t*ray.dir
@@ -57,9 +57,10 @@ __device__ float intersect_sphere(const Ray &r) const
   float b = dot(op, r.dir);    // b in quadratic equation
   float disc = b*b - dot(op, op) + rad*rad;  // discriminant quadratic equation
   if (disc<0) return 0;       // if disc < 0, no real solution (we're not interested in complex roots) 
-   else disc = sqrtf(disc);    // if disc >= 0, check for solutions using negative and positive discriminant
+  else disc = sqrtf(disc);    // if disc >= 0, check for solutions using negative and positive discriminant
   return (t = b - disc)>epsilon ? t : ((t = b + disc)>epsilon ? t : 0); // pick closest point in front of ray origin
- }
+}
+
 };
 
 // SCENE
@@ -151,18 +152,15 @@ __device__ float3 radiance(Ray &r, unsigned int *s1, unsigned int *s2)
   float r2 = getrandom(s1, s2);  // pick random number for elevation
   float r2s = sqrtf(r2); 
 
-  // compute local orthonormal basis uvw at hitpoint to use for calculation random ray direction 
+  // compute local orthonormal basis uvw at hitpoint for calculation random ray direction 
   // first vector = normal at hitpoint, second vector is orthogonal to first, third vector is orthogonal to first two vectors
   float3 w = nl; 
   float3 u = normalize(cross((fabs(w.x) > .1 ? make_float3(0, 1, 0) : make_float3(1, 0, 0)), w));  
   float3 v = cross(w,u);
 
-  // compute random ray direction on hemisphere using polar coordinates
   // cosine weighted importance sampling (favours ray directions closer to normal direction)
-  float3 d = normalize(u*cos(r1)*r2s + v*sin(r1)*r2s + w*sqrtf(1 - r2));
-
-  // new ray origin is intersection point of previous ray with scene
-  r.orig = x + nl*0.05f; // offset ray origin slightly to prevent self intersection
+  float3 d = normalize(u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrtf(1 - r2));
+  r.orig = x + nl * 0.05f; // offset ray origin slightly to prevent self intersection
   r.dir = d;
 
   mask *= obj.col;    // multiply with colour of object       
