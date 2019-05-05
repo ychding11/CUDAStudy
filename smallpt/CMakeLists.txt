@@ -71,6 +71,8 @@ SET(EXE_NAME "single_sphere")
 #ADD_EXECUTABLE(${EXE_NAME} "src/single_sphere.cu")
 #Use static cuda link
 cuda_add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/single_sphere.cu" ${SRC_FILES})
+#cuda_add_executable("material_test" "${CMAKE_SOURCE_DIR}/src/material_test.cu" ${SRC_FILES})
+cuda_add_executable("small_pt" "${CMAKE_SOURCE_DIR}/src/smallptCUDA.cu" ${SRC_FILES})
 
 #--------------------------------------------------------------------
 # preproc
