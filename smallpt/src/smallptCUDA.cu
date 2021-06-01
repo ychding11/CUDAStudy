@@ -259,7 +259,7 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 
 int main(int argc, char *argv[])
 {
-    int width = 1024, height = 1024, samps = 1024;
+    int width = 800, height = 800, samps = 1024;
     
     if (argc > 1)
     {

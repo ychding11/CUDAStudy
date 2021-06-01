@@ -21,20 +21,6 @@ include_directories(
 #CMake built-in module
 find_package(CUDA QUIET REQUIRED)
 
-#######################################################################################
-
-#set (USE_MSVC_RUNTIME_LIBRARY_DLL true)
-#IF (NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
-#    #We statically link to reduce dependancies
-#    FOREACH(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RETAIL)
-#        IF(${flag_var} MATCHES "/MD")
-#            STRING(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-#        ENDIF(${flag_var} MATCHES "/MD")
-#        IF(${flag_var} MATCHES "/MDd")
-#            STRING(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
-#        ENDIF(${flag_var} MATCHES "/MDd")
-#    ENDFOREACH(flag_var)
-#ENDIF (NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
 
 #######################################################################################
 
@@ -75,14 +61,13 @@ add_definitions(-D__STDC_LIMIT_MACROS)
 add_definitions(-D__STDC_CONSTANT_MACROS)
 add_definitions(-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 
-if(MSVC)
-#add_definitions(-DWIN32)
-#add_definitions(-D_WIN32)
-#add_definitions(-DNOMINMAX)
-endif()
-
 add_definitions(-DUSE_DL_PREFIX)
 add_definitions(-DGLEW_STATIC)
+
+if(MSVC)
+
+endif()
+
 
 SET(LINK_OPTIONS " ")
 
@@ -111,7 +96,8 @@ endif()
 ####################################### Add Executable ###########################################
 #Use static cuda link
 SET(EXE_NAME "smallptCUDA")
-cuda_add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/smallptCUDA.cu" ${SRC_FILES})
+#cuda_add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/smallptCUDA.cu" ${SRC_FILES})
+cuda_add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/smallptCUDA.cu")
 #--------------------------------------------------------------------
 # output dirs
 #--------------------------------------------------------------------
