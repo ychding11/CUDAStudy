@@ -1,16 +1,20 @@
 cmake_minimum_required (VERSION 2.8)
+
 project (cuda_study)
 
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON) 
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "Configuration types" FORCE)
 
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+
+# set execuatable name of current project
+set(EXE_NAME "bandwidth_test")
 
 file(GLOB SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
 )
 
 file(GLOB CU_FILES
@@ -22,14 +26,14 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/ )
 #CMake built-in module
 find_package(CUDA QUIET REQUIRED)
 
-
-#######################################################################################
-
+#------------------------------------------------------------------------------------------------
+# group source code 
+#------------------------------------------------------------------------------------------------
 foreach(f ${SRC_FILES})
     # Get the path of the file relative to ${DIRECTORY},
     # then alter it (not compulsory)
     file(RELATIVE_PATH SRCGR ${CMAKE_CURRENT_SOURCE_DIR} ${f})
-    set(SRCGR "Sources/${SRCGR}")
+    set(SRCGR "Cpp/${SRCGR}")
 
     # Extract the folder, ie remove the filename part
     string(REGEX REPLACE "(.*)(/[^/]*)$" "\\1" SRCGR ${SRCGR})
@@ -38,7 +42,6 @@ foreach(f ${SRC_FILES})
     string(REPLACE / \\ SRCGR ${SRCGR})
     source_group("${SRCGR}" FILES ${f})
 endforeach()
-
 
 #------------------------------------------------------------------------------------------------
 # preproc
@@ -73,14 +76,13 @@ endif()
 
 SET(LINK_OPTIONS " ")
 
-####################################### Add Executable ###########################################
+#------------------------------------------------------------------------------------------------
+# add executable & set output dirs
+#------------------------------------------------------------------------------------------------
+
 #Use static cuda link
-SET(EXE_NAME "bandwidth_test")
 cuda_add_executable(${EXE_NAME} ${CU_FILES} ${SRC_FILES})
 
-#------------------------------------------------------------------------------------------------
-# output dirs
-#------------------------------------------------------------------------------------------------
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin )
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin )
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR}/bin )
@@ -97,7 +99,7 @@ if(MSVC)
 endif()
 
 
-#######################################################################################
-##For reference
-##https://cmake.org/cmake/help/latest/manual/cmake-properties.7.html#target-properties
-#######################################################################################
+#------------------------------------------------------------------------------------------------
+# 
+# https://cmake.org/cmake/help/latest/manual/cmake-properties.7.html#target-properties
+#------------------------------------------------------------------------------------------------
