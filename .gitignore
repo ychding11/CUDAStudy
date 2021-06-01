@@ -1,34 +1,3 @@
-*.psess
-*.aps
-*.vsp
-*.log
-*.err
-*.wrn
-*.suo
-*.sdf
-*.user
-*.i
-*.vspscc
-*.opensdf
-*.opendb
-*.ipch
-*.cache
-*.tlog
-*.lastbuildstate
-*.ilk
-*.VC.db
-*.ppm
-log.txt
-.vs
-Bin
-ipch
-Debug
-Debug Win8
-Debug XP
-Profile
-Release
-Release Win8
-Release XP
-x64
-Test
-/wiki
+build/
+debug_build/
+bin/
