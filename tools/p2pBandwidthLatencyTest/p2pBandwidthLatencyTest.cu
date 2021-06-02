@@ -42,6 +42,8 @@ P2PEngine p2p_mechanism = CE; // By default use Copy Engine
             exit(EXIT_FAILURE);                                           \
         }                                                                 \
     }
+
+//<  how to enable cuda syntax highlight in visual studio ? 
 __global__ void delay(volatile int *flag, unsigned long long timeout_clocks = 10000000)
 {
     // Wait until the application notifies us that it has completed queuing up the
@@ -88,13 +90,16 @@ void printHelp(void)
 
 void checkP2Paccess(int numGPUs)
 {
-    for (int i = 0; i < numGPUs; i++) {
+    for (int i = 0; i < numGPUs; i++)
+    {
         cudaSetDevice(i);
         cudaCheckError();
 
-        for (int j = 0; j < numGPUs; j++) {
+        for (int j = 0; j < numGPUs; j++)
+        {
             int access;
-            if (i != j) {
+            if (i != j)
+            {
                 cudaDeviceCanAccessPeer(&access, i, j);
                 cudaCheckError();
                 printf("Device=%d %s Access Peer Device=%d\n", i, access ? "CAN" : "CANNOT", j);
@@ -109,19 +114,24 @@ void performP2PCopy(int *dest, int destDevice, int *src, int srcDevice, int num_
     int blockSize = 0;
     int numBlocks = 0;
 
+    //< Returns grid and block size that achieves maximum potential occupancy for a device function.
+    //< {compiled info, device info} ==> suggested value
     cudaOccupancyMaxPotentialBlockSize(&numBlocks, &blockSize, copyp2p);
     cudaCheckError();
 
     if (p2p_mechanism == SM && p2paccess)
     {
-        for (int r = 0; r < repeat; r++) {
+        for (int r = 0; r < repeat; r++)
+        {
             copyp2p<<<numBlocks, blockSize, 0, streamToRun>>>((int4*)dest, (int4*)src, num_elems/4);
         }
     }
     else
     {
-        for (int r = 0; r < repeat; r++) {
-            cudaMemcpyPeerAsync(dest, destDevice, src, srcDevice, sizeof(int)*num_elems, streamToRun);
+        for (int r = 0; r < repeat; r++)
+        {
+            //< Is the copy by SM or CE ?
+            cudaMemcpyPeerAsync(dest, destDevice, src, srcDevice, sizeof(int) * num_elems, streamToRun);
         }
     }
 }
@@ -140,7 +150,8 @@ void outputBandwidthMatrix(int numGPUs, bool p2p, P2PDataTransfer p2p_method)
     cudaHostAlloc((void **)&flag, sizeof(*flag), cudaHostAllocPortable);
     cudaCheckError();
 
-    for (int d = 0; d < numGPUs; d++) {
+    for (int d = 0; d < numGPUs; d++)
+    {
         cudaSetDevice(d);
         cudaStreamCreateWithFlags(&stream[d], cudaStreamNonBlocking);
         cudaMalloc(&buffers[d], numElems * sizeof(int));
