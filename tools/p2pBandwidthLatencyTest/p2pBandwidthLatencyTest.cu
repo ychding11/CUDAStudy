@@ -88,6 +88,29 @@ void printHelp(void)
     printf("--sm_copy\t\tUse SM intiated p2p transfers instead of Copy Engine\n");
 }
 
+void printCudaInfo()
+{
+    int deviceCount = 0;
+    cudaError_t err = cudaGetDeviceCount(&deviceCount);
+
+    printf("---------------------------------------------------------\n");
+    printf("Found %d CUDA devices\n", deviceCount);
+
+    for (int i = 0; i < deviceCount; i++)
+    {
+        cudaDeviceProp deviceProps;
+        cudaGetDeviceProperties(&deviceProps, i);
+        printf("Device %d: %s\n", i, deviceProps.name);
+        printf("   SMs:        %d\n", deviceProps.multiProcessorCount);
+        printf("   Global mem: %.0f MB\n",
+            static_cast<float>(deviceProps.totalGlobalMem) / (1024.f * 1024.f));
+        printf("   Const mem: %.0f MB\n",
+            static_cast<float>(deviceProps.totalConstMem) / (1024.f * 1024.f));
+        printf("   CUDA Cap:   %d.%d\n", deviceProps.major, deviceProps.minor);
+    }
+    printf("---------------------------------------------------------\n");
+}
+
 void checkP2Paccess(int numGPUs)
 {
     for (int i = 0; i < numGPUs; i++)
@@ -204,6 +227,8 @@ void outputBandwidthMatrix(int numGPUs, bool p2p, P2PDataTransfer p2p_method)
             *flag = 0;
             delay<<< 1, 1, 0, stream[i]>>>(flag);
             cudaCheckError();
+
+            //< Captures in event the contents of stream at the time of this call.
             cudaEventRecord(start[i], stream[i]);
             cudaCheckError();
 
@@ -646,21 +671,26 @@ int main(int argc, char **argv)
     printf("P2P Connectivity Matrix\n");
     printf("     D\\D");
 
-    for (int j = 0; j < numGPUs; j++) {
+    for (int j = 0; j < numGPUs; j++)
+    {
         printf("%6d", j);
     }
     printf("\n");
 
-    for (int i = 0; i < numGPUs; i++) {
+    for (int i = 0; i < numGPUs; i++)
+    {
         printf("%6d\t", i);
-        for (int j = 0; j < numGPUs; j++) {
-            if (i != j) {
+        for (int j = 0; j < numGPUs; j++)
+        {
+            if (i != j)
+            {
                 int access;
                 cudaDeviceCanAccessPeer(&access, i, j);
                 cudaCheckError();
                 printf("%6d", (access) ? 1 : 0);
             }
-            else {
+            else
+            {
                 printf("%6d", 1);
             }
         }
