@@ -166,14 +166,21 @@ void outputBandwidthMatrix(int numGPUs, bool p2p, P2PDataTransfer p2p_method)
 
     vector<double> bandwidthMatrix(numGPUs * numGPUs);
 
-    for (int i = 0; i < numGPUs; i++) {
+    for (int i = 0; i < numGPUs; i++)
+    {
+        //< Set device to be used for GPU executions.
         cudaSetDevice(i);
 
-        for (int j = 0; j < numGPUs; j++) {
+        for (int j = 0; j < numGPUs; j++)
+        {
             int access = 0;
-            if (p2p) {
+            if (p2p)
+            {
                 cudaDeviceCanAccessPeer(&access, i, j);
-                if (access) {
+                if (access)
+                {
+                    //< Enables direct access to memory allocations on a peer device. flag = 0 is reserved
+                    //< Memory granted is unidirectional
                     cudaDeviceEnablePeerAccess(j, 0 );
                     cudaCheckError();
                     cudaSetDevice(j);
@@ -185,6 +192,7 @@ void outputBandwidthMatrix(int numGPUs, bool p2p, P2PDataTransfer p2p_method)
                 }
             }
 
+            //< Blocks until stream has completed all operations.
             cudaStreamSynchronize(stream[i]);
             cudaCheckError();
 
@@ -199,12 +207,13 @@ void outputBandwidthMatrix(int numGPUs, bool p2p, P2PDataTransfer p2p_method)
             cudaEventRecord(start[i], stream[i]);
             cudaCheckError();
 
-            if (i == j) {
+            if (i == j)
+            {
                 // Perform intra-GPU, D2D copies
                 performP2PCopy(buffers[i], i, buffersD2D[i], i, numElems, repeat, access, stream[i]);
-
             }
-            else {
+            else
+            {
                 if (p2p_method == P2P_WRITE)
                 {
                     performP2PCopy(buffers[j], j, buffers[i], i, numElems, repeat, access, stream[i]);
@@ -225,14 +234,16 @@ void outputBandwidthMatrix(int numGPUs, bool p2p, P2PDataTransfer p2p_method)
 
             float time_ms;
             cudaEventElapsedTime(&time_ms, start[i], stop[i]);
-            double time_s = time_ms / 1e3;
+            double time_s = time_ms / 1e3f;
 
-            double gb = numElems * sizeof(int) * repeat / (double)1e9;
-            if (i == j) {
+            double gb = numElems * sizeof(int) * repeat / (double)1e9f;
+            if (i == j)
+            {
                 gb *= 2;    //must count both the read and the write here
             }
             bandwidthMatrix[i * numGPUs + j] = gb / time_s;
-            if (p2p && access) {
+            if (p2p && access)
+            {
                 cudaDeviceDisablePeerAccess(j);
                 cudaSetDevice(j);
                 cudaDeviceDisablePeerAccess(i);
@@ -244,23 +255,27 @@ void outputBandwidthMatrix(int numGPUs, bool p2p, P2PDataTransfer p2p_method)
 
     printf("   D\\D");
 
-    for (int j = 0; j < numGPUs; j++) {
+    for (int j = 0; j < numGPUs; j++)
+    {
         printf("%6d ", j);
     }
 
     printf("\n");
 
-    for (int i = 0; i < numGPUs; i++) {
+    for (int i = 0; i < numGPUs; i++)
+    {
         printf("%6d ", i);
 
-        for (int j = 0; j < numGPUs; j++) {
+        for (int j = 0; j < numGPUs; j++)
+        {
             printf("%6.02f ", bandwidthMatrix[i * numGPUs + j]);
         }
 
         printf("\n");
     }
 
-    for (int d = 0; d < numGPUs; d++) {
+    for (int d = 0; d < numGPUs; d++)
+    {
         cudaSetDevice(d);
         cudaFree(buffers[d]);
         cudaFree(buffersD2D[d]);
