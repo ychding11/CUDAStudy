@@ -23,6 +23,7 @@ file(GLOB CU_FILES
 )
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/ )
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/GL/ )
 
 #CMake built-in module
 find_package(CUDA QUIET REQUIRED)
