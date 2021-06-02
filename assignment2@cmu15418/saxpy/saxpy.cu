@@ -96,24 +96,24 @@ saxpyCuda(int N, float alpha, float* xarray, float* yarray, float* resultarray) 
     //
 }
 
-void
-printCudaInfo() {
-
-    // for fun, just print out some stats on the machine
-
+void printCudaInfo()
+{
     int deviceCount = 0;
     cudaError_t err = cudaGetDeviceCount(&deviceCount);
 
     printf("---------------------------------------------------------\n");
     printf("Found %d CUDA devices\n", deviceCount);
 
-    for (int i=0; i<deviceCount; i++) {
+    for (int i=0; i<deviceCount; i++)
+    {
         cudaDeviceProp deviceProps;
         cudaGetDeviceProperties(&deviceProps, i);
         printf("Device %d: %s\n", i, deviceProps.name);
         printf("   SMs:        %d\n", deviceProps.multiProcessorCount);
         printf("   Global mem: %.0f MB\n",
-               static_cast<float>(deviceProps.totalGlobalMem) / (1024 * 1024));
+               static_cast<float>(deviceProps.totalGlobalMem) / (1024.f * 1024.f));
+        printf("   Const mem: %.0f MB\n",
+               static_cast<float>(deviceProps.totalConstMem) / (1024.f * 1024.f));
         printf("   CUDA Cap:   %d.%d\n", deviceProps.major, deviceProps.minor);
     }
     printf("---------------------------------------------------------\n");
