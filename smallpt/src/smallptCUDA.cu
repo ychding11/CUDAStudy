@@ -67,7 +67,8 @@ __device__ float intersect_sphere(const Ray &r) const
 // 9 spheres forming a Cornell box
 // small enough to be in constant GPU memory
 // { float radius, { float3 position }, { float3 emission }, { float3 colour }, refl_type }
-__constant__ Sphere spheres[] = {
+__constant__ Sphere spheres[] =
+{
  { 1e5f, { 1e5f + 1.0f, 40.8f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { 0.75f, 0.25f, 0.25f }, DIFF }, //Left 
  { 1e5f, { -1e5f + 99.0f, 40.8f, 81.6f }, { 0.0f, 0.0f, 0.0f }, { .25f, .25f, .75f }, DIFF }, //Rght 
  { 1e5f, { 50.0f, 40.8f, 1e5f }, { 0.0f, 0.0f, 0.0f }, { .75f, .75f, .75f }, DIFF }, //Back 
@@ -206,9 +207,10 @@ __global__ void render_kernel(float3 *output, int width, int height, int samps)
     output[i] = make_float3(clamp(r.x, 0.0f, 1.0f), clamp(r.y, 0.0f, 1.0f), clamp(r.z, 0.0f, 1.0f));
 }
 
-inline float clamp(float x){ return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; } 
+//< clamp x into [0, 1]
+inline float clamp(float x) { return x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; } 
 
-// convert RGB float in range [0,1] to int in range [0, 255] and perform gamma correction
+// convert RGB float  [0,1] ==> int [0, 255] and perform gamma correction
 inline int toInt(float x){ return int(pow(clamp(x), 1 / 2.2) * 255 + .5); } 
 
 void SaveToPPM(float3* output, int w, int h);
@@ -231,12 +233,13 @@ int TestSmallPTOnGPU(int width, int height, int samps)
     // Record start time                          
     auto start = std::chrono::high_resolution_clock::now();
 
-    // schedule threads on device and launch CUDA kernel from host
+    //< schedule threads on device and launch CUDA kernel from host
+    //< use default stream
     render_kernel <<< grid, block >>>(output_d, width, height, samps);  
+    CUDA_CALL_CHECK(cudaDeviceSynchronize());
 
     // Check for any errors launching the kernel
     CUDA_CALL_CHECK(cudaGetLastError());
-    CUDA_CALL_CHECK(cudaDeviceSynchronize());
 
     // Record end time
     auto finish = std::chrono::high_resolution_clock::now();
@@ -244,7 +247,7 @@ int TestSmallPTOnGPU(int width, int height, int samps)
     //std::cout << "Elapsed time: " << elapsed.count() << " s\n";
     printf("Render Done! Time=%lf seconds\n", elapsed.count());
 
-    // copy results of computation from device back to host
+    // copy result from device back to host
     CUDA_CALL_CHECK(cudaMemcpy(output_h, output_d, width * height * sizeof(float3), cudaMemcpyDeviceToHost));
  
     // free CUDA memory
