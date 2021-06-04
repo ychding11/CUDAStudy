@@ -181,7 +181,9 @@ __global__ void render_kernel(float3 *output, int width, int height, int samps)
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
-    unsigned int i = (height - y - 1) * width + x; // index of current pixel (calculated using thread index) 
+    //< index of current pixel in one Dimension 
+    //< reverse y axis
+    unsigned int i = (height - y - 1) * width + x;
 
     unsigned int s1 = x;  // seeds for random number generator
     unsigned int s2 = y;
@@ -193,18 +195,22 @@ __global__ void render_kernel(float3 *output, int width, int height, int samps)
     float3 cy = normalize(cross(cx, cam.dir)) * .5135; // ray direction offset in y direction (.5135 is field of view angle)
     float3 r = make_float3(0.0f);
 
-    // samples per pixel
+    //< AA : samples per pixel
+    //< It is NOT progressive mode
+    float invSamps = (1. / samps);
     for (int s = 0; s < samps; s++)
 	{  
 		// compute primary ray direction
         float3 d = cam.dir + cx*((.25 + x) / width - .5) + cy*((.25 + y) / height - .5);
 
         // create primary ray, add incoming radiance to pixelcolor
-        r = r + radiance(Ray(cam.orig + d * 40, normalize(d)), &s1, &s2)*(1. / samps);
-    }       // Camera rays are pushed ^^^^^ forward to start in interior 
+        r = r + radiance(Ray(cam.orig + d * 40, normalize(d)), &s1, &s2) * invSamps;
+    }
 
-    // write rgb value of pixel to image buffer on the GPU, clamp value to [0.0f, 1.0f] range
-    output[i] = make_float3(clamp(r.x, 0.0f, 1.0f), clamp(r.y, 0.0f, 1.0f), clamp(r.z, 0.0f, 1.0f));
+    //< write raw rgb value to buffer on the GPU 
+    //< clamp & gamma is done on CPU
+    output[i] = make_float3(r.x, r.y, r.z);
+    //output[i] = make_float3(clamp(r.x, 0.0f, 1.0f), clamp(r.y, 0.0f, 1.0f), clamp(r.z, 0.0f, 1.0f));
 }
 
 //< clamp x into [0, 1]
