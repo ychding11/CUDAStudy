@@ -173,7 +173,7 @@ __device__ float3 radiance(Ray &r, unsigned int *s1, unsigned int *s2)
 }
 
 // __global__ : executed on the device (GPU) and callable only from host (CPU) 
-__global__ void render_kernel(float3 *output, int width, int height, int samps)
+__global__ void render_kernel(float3 *output, int width, int height, int samps, float vfov = 45.f)
 {
     // assign a CUDA thread to every pixel (x,y) 
     // blockIdx, blockDim and threadIdx are CUDA specific keywords
@@ -194,7 +194,7 @@ __global__ void render_kernel(float3 *output, int width, int height, int samps)
     Ray cam(make_float3(50, 52, 255.f), normalize(make_float3(0, -0.042612f, -1))); 
 
     float3 up = make_float3(0, 1, 0);
-    float vfov = 45.f;
+    //float vfov = 45.f;
     auto ratio = float(height) / float(width);
     auto dir = normalize(cam.dir);
     auto image_u = normalize(cross(dir, up));
@@ -231,7 +231,7 @@ inline int toInt(float x){ return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
 
 void SaveToPPM(float3* output, int w, int h);
 
-int TestSmallPTOnGPU(int width, int height, int samps)
+int TestSmallPTOnGPU(int width, int height, int samps, float vfov = 45.f)
 {
     float3* output_h = new float3[width * height]; // pointer to memory for image on the host (system RAM)
     float3* output_d;    // pointer to memory for image on the device (GPU VRAM)
@@ -251,7 +251,7 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 
     //< schedule threads on device and launch CUDA kernel from host
     //< use default stream
-    render_kernel <<< grid, block >>>(output_d, width, height, samps);  
+    render_kernel <<< grid, block >>>(output_d, width, height, samps, vfov);  
     CUDA_CALL_CHECK(cudaDeviceSynchronize());
 
     // Check for any errors launching the kernel
@@ -279,6 +279,7 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 int main(int argc, char *argv[])
 {
     int width = 800, height = 800, samps = 800;
+    float vfov = 45.f;
     
     if (argc > 1)
     {
@@ -288,9 +289,11 @@ int main(int argc, char *argv[])
             height = getCmdLineArgumentInt(argc, (const char **)argv, "height");
         if (checkCmdLineFlag(argc, (const char **)argv, "samples"))
             samps = getCmdLineArgumentInt(argc, (const char **)argv, "samples");
+        if (checkCmdLineFlag(argc, (const char **)argv, "vfov"))
+            vfov = getCmdLineArgumentFloat(argc, (const char **)argv, "vfov");
     }
 
-    TestSmallPTOnGPU(width, height, samps);
+    TestSmallPTOnGPU(width, height, samps, vfov);
 
     system("ffplay smallptcuda.ppm");
     system("PAUSE");
@@ -302,9 +305,6 @@ void SaveToPPM(float3* output, int w, int h)
     FILE *f = fopen("smallptcuda.ppm", "w");          
     fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
     for (int i = 0; i < w * h; i++)  // loop over pixels, write RGB values
-    fprintf(f, "%d %d %d ", toInt(output[i].x),
-                            toInt(output[i].y),
-                            toInt(output[i].z));
+        fprintf(f, "%d %d %d ", toInt(output[i].x), toInt(output[i].y), toInt(output[i].z));
     fclose(f);
-
 }
