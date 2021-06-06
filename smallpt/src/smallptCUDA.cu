@@ -205,43 +205,32 @@ __global__ void render_kernel(float3 *output, int width, int height, int samps, 
 
     //< AA : samples per pixel
     //< It is NOT progressive mode
+    float u, v;
+    float3 d;
     float invSamps = (1. / samps);
     for (int s = 0; s < (samps >> 2); s++)
 	{  
+        //< Performance goes down by applying AA. 1.1s --> 1.3s
         {
-		    //< ray sampling from camera 
-            float u = (2 * (x + 0.25f)) / float(width)  - 1.0f ;
-            float v = (2 * (y + 0.25f)) / float(height) - 1.0f ;
-            float3 d = image_u * u + image_v * v + dir;
-
-            // collect radiance 
+		    //< ray sampling from camera & collect radiance 
+            u = (2 * (x + 0.25f)) / float(width)  - 1.0f ;
+            v = (2 * (y + 0.25f)) / float(height) - 1.0f ;
+            d = image_u * u + image_v * v + dir;
             r = r + radiance(Ray(cam.orig, normalize(d)), &s1, &s2) * invSamps;
-        }
-        {
-		    //< ray sampling from camera 
-            float u = (2 * (x + 0.75f)) / float(width)  - 1.0f ;
-            float v = (2 * (y + 0.25f)) / float(height) - 1.0f ;
-            float3 d = image_u * u + image_v * v + dir;
 
-            // collect radiance 
+            u = (2 * (x + 0.75f)) / float(width)  - 1.0f ;
+            v = (2 * (y + 0.25f)) / float(height) - 1.0f ;
+            d = image_u * u + image_v * v + dir;
             r = r + radiance(Ray(cam.orig, normalize(d)), &s1, &s2) * invSamps;
-        }
-        {
-		    //< ray sampling from camera 
-            float u = (2 * (x + 0.25f)) / float(width)  - 1.0f ;
-            float v = (2 * (y + 0.75f)) / float(height) - 1.0f ;
-            float3 d = image_u * u + image_v * v + dir;
 
-            // collect radiance 
+            u = (2 * (x + 0.25f)) / float(width)  - 1.0f ;
+            v = (2 * (y + 0.75f)) / float(height) - 1.0f ;
+            d = image_u * u + image_v * v + dir;
             r = r + radiance(Ray(cam.orig, normalize(d)), &s1, &s2) * invSamps;
-        }
-        {
-		    //< ray sampling from camera 
-            float u = (2 * (x + 0.75f)) / float(width)  - 1.0f ;
-            float v = (2 * (y + 0.75f)) / float(height) - 1.0f ;
-            float3 d = image_u * u + image_v * v + dir;
 
-            // collect radiance 
+            u = (2 * (x + 0.75f)) / float(width)  - 1.0f ;
+            v = (2 * (y + 0.75f)) / float(height) - 1.0f ;
+            d = image_u * u + image_v * v + dir;
             r = r + radiance(Ray(cam.orig, normalize(d)), &s1, &s2) * invSamps;
         }
     }
