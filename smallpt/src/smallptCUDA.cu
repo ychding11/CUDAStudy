@@ -188,23 +188,39 @@ __global__ void render_kernel(float3 *output, int width, int height, int samps)
     unsigned int s1 = x;  // seeds for random number generator
     unsigned int s2 = y;
 
+    float3 r = make_float3(0.0f);
+
     // generate ray directed at lower left corner of the screen
     // compute directions for all other rays by adding cx and cy increments in x and y direction
-    Ray cam(make_float3(50, 52, 295.6), normalize(make_float3(0, -0.042612, -1))); // first hardcoded camera ray(origin, direction) 
+    Ray cam(make_float3(50, 52, 255.f), normalize(make_float3(0, -0.042612f, -1))); // first hardcoded camera ray(origin, direction) 
     float3 cx = make_float3(width * .5135 / height, 0.0f, 0.0f); // ray direction offset in x direction
     float3 cy = normalize(cross(cx, cam.dir)) * .5135; // ray direction offset in y direction (.5135 is field of view angle)
-    float3 r = make_float3(0.0f);
+
+    float3 up = make_float3(0, 1, 0);
+    float vfov = 45.f;
+    auto ratio = float(height) / float(width);
+    auto dir = normalize(cam.dir);
+    auto image_u = normalize(cross(dir, up));
+    auto image_v = normalize(cross(image_u, dir));
+    auto image_w = std::tan(vfov * float (M_PI * (1.f / 180.f) * 0.5f));
+    image_u = image_u * image_w;
+    image_v = image_v * image_w * ratio;
 
     //< AA : samples per pixel
     //< It is NOT progressive mode
     float invSamps = (1. / samps);
     for (int s = 0; s < samps; s++)
 	{  
+        float u = (2 * (x + 0.5f)) / float(width) - 1.0f ;
+        float v = (2 * (y + 0.5f)) / float(height) - 1.0f ;
 		// compute primary ray direction
-        float3 d = cam.dir + cx*((.25 + x) / width - .5) + cy*((.25 + y) / height - .5);
+        //float3 d = cam.dir + cx*((.25 + x) / width - .5) + cy*((.25 + y) / height - .5);
+        //float3 d = cam.dir + cx * u + cy * v;
+        float3 d = image_u * u + image_v * v + dir;
 
         // create primary ray, add incoming radiance to pixelcolor
-        r = r + radiance(Ray(cam.orig + d * 40, normalize(d)), &s1, &s2) * invSamps;
+        //r = r + radiance(Ray(cam.orig + d * 40, normalize(d)), &s1, &s2) * invSamps;
+        r = r + radiance(Ray(cam.orig, normalize(d)), &s1, &s2) * invSamps;
     }
 
     //< write raw rgb value to buffer on the GPU 
@@ -268,7 +284,7 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 
 int main(int argc, char *argv[])
 {
-    int width = 800, height = 800, samps = 1024;
+    int width = 800, height = 800, samps = 800;
     
     if (argc > 1)
     {
