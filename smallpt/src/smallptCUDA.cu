@@ -276,13 +276,34 @@ int TestSmallPTOnGPU(int width, int height, int samps, float vfov = 45.f)
     return 0;
 }
 
+static void help(const char *name)
+{
+    printf("Usage:  %s [OPTION]...\n", name);
+    printf("A simple path tracer by cuda. \n");
+    printf("\n");
+
+    printf("Options:\n");
+    printf("--help\t\t Display this help menu, exit\n\n");
+    printf("-width=value\t\t set width, int\n");
+    printf("-height=value\t\t set height, int\n");
+    printf("-samples=value\t\t set samples per pixel, int \n");
+    printf("-vfov=value\t\t set vertical fov, float\n");
+
+    exit(0);
+}
+
 int main(int argc, char *argv[])
 {
     int width = 800, height = 800, samps = 800;
     float vfov = 45.f;
+    bool showHelp = false;
     
     if (argc > 1)
     {
+        if (checkCmdLineFlag(argc, (const char**)argv, "help"))
+        {
+            help(argv[0]);
+        }
         if (checkCmdLineFlag(argc, (const char **)argv, "width"))
             width = getCmdLineArgumentInt(argc, (const char **)argv, "width");
         if (checkCmdLineFlag(argc, (const char **)argv, "height"))
