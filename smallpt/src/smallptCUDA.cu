@@ -190,11 +190,8 @@ __global__ void render_kernel(float3 *output, int width, int height, int samps)
 
     float3 r = make_float3(0.0f);
 
-    // generate ray directed at lower left corner of the screen
-    // compute directions for all other rays by adding cx and cy increments in x and y direction
-    Ray cam(make_float3(50, 52, 255.f), normalize(make_float3(0, -0.042612f, -1))); // first hardcoded camera ray(origin, direction) 
-    float3 cx = make_float3(width * .5135 / height, 0.0f, 0.0f); // ray direction offset in x direction
-    float3 cy = normalize(cross(cx, cam.dir)) * .5135; // ray direction offset in y direction (.5135 is field of view angle)
+    // hardcoded camera ray(origin, direction) 
+    Ray cam(make_float3(50, 52, 255.f), normalize(make_float3(0, -0.042612f, -1))); 
 
     float3 up = make_float3(0, 1, 0);
     float vfov = 45.f;
@@ -211,15 +208,12 @@ __global__ void render_kernel(float3 *output, int width, int height, int samps)
     float invSamps = (1. / samps);
     for (int s = 0; s < samps; s++)
 	{  
+		//< ray sampling from camera 
         float u = (2 * (x + 0.5f)) / float(width) - 1.0f ;
         float v = (2 * (y + 0.5f)) / float(height) - 1.0f ;
-		// compute primary ray direction
-        //float3 d = cam.dir + cx*((.25 + x) / width - .5) + cy*((.25 + y) / height - .5);
-        //float3 d = cam.dir + cx * u + cy * v;
         float3 d = image_u * u + image_v * v + dir;
 
-        // create primary ray, add incoming radiance to pixelcolor
-        //r = r + radiance(Ray(cam.orig + d * 40, normalize(d)), &s1, &s2) * invSamps;
+        // collect radiance 
         r = r + radiance(Ray(cam.orig, normalize(d)), &s1, &s2) * invSamps;
     }
 
