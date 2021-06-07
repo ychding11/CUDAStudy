@@ -35,6 +35,9 @@ struct Ray
 
 enum Refl_t { DIFF, SPEC, REFR };  // material types, used in radiance(), only DIFF used here
 
+//< use on GPU
+ __constant__ float epsilon = 1e-6f;  // epsilon required to prevent floating point precision artifacts
+
 struct Sphere
 {
  float rad;            // radius 
@@ -53,7 +56,7 @@ __device__ float intersect_sphere(const Ray &r) const
  // more details in "Realistic Ray Tracing" book by P. Shirley or Scratchapixel.com
 
   float3 op = pos - r.orig;    // distance from ray.orig to center sphere 
-  float t, epsilon = 0.0001f;  // epsilon required to prevent floating point precision artefacts
+  float t;
   float b = dot(op, r.dir);    // b in quadratic equation
   float disc = b*b - dot(op, op) + rad*rad;  // discriminant quadratic equation
   if (disc<0) return 0;       // if disc < 0, no real solution (we're not interested in complex roots) 
