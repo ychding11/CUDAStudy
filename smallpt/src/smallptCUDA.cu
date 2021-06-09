@@ -116,12 +116,12 @@ __device__ static float getrandom(unsigned int *seed0, unsigned int *seed1)
  return (res.f - 2.f) / 2.f;
 }
 
-// radiance function, the meat of path tracing 
+// radiance function, the mean of path tracing 
 // solves the rendering equation: 
 // outgoing radiance (at a point) = emitted radiance + reflected radiance
 // reflected radiance is sum (integral) of incoming radiance from all directions in hemisphere above point, 
 // multiplied by reflectance function of material (BRDF) and cosine incident angle 
-// returns ray color
+// returns radiance by ray 
 __device__ float3 radiance(Ray &r, unsigned int *s1, unsigned int *s2)
 { 
  float3 accucolor = make_float3(0.0f, 0.0f, 0.0f); // accumulates ray colour with each iteration through bounce loop
@@ -175,7 +175,7 @@ __device__ float3 radiance(Ray &r, unsigned int *s1, unsigned int *s2)
  return accucolor;
 }
 
-// __global__ : executed on the device (GPU) and callable only from host (CPU) 
+// __global__ : executed on the device (GPU) and called only from host (CPU) 
 __global__ void render_kernel(float3 *output, int width, int height, int samps, float vfov = 45.f)
 {
     // assign a CUDA thread to every pixel (x,y) 
