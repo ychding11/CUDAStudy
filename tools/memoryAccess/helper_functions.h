@@ -20,7 +20,6 @@
 
 // includes, project
 #include <assert.h>
-//#include <exception.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +31,6 @@
 #include <vector>
 
 // includes, timer, string parsing, image helpers
-//#include <helper_image.h>  // helper functions for image compare, dump, data comparisons
 #include <helper_string.h>  // helper functions for string parsing
 #include <helper_timer.h>   // helper functions for timers
 

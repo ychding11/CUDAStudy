@@ -10,11 +10,9 @@
  */
 
 /*
- * This is a simple test showing huge access speed gap
- * between aligned and misaligned structures
+ * This is a simple test showing huge access speed gap between aligned and misaligned structures
  * (those having/missing __align__ keyword).
- * It measures per-element copy throughput for
- * aligned and misaligned structures on
+ * It measures per-element copy throughput for aligned and misaligned structures on
  * big chunks of data.
  */
 
