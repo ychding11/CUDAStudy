@@ -329,18 +329,17 @@ int border_dwell (int w, int h, complex cmin, complex cmax, int x0, int y0, int 
     return ldwells[0];
 }  // border_dwell
 
-/** computes the dwells for Mandelbrot image using dynamic parallelism; one block is launched per pixel
-        @param dwells the output array
-        @param w the width of the output image
-        @param h the height of the output image
-        @param cmin the complex value associated with the left-bottom corner of the
-        image
-        @param cmax the complex value associated with the right-top corner of the
-        image
-        @param x0 the starting x coordinate of the portion to compute
-        @param y0 the starting y coordinate of the portion to compute
-        @param d the size of the portion to compute (the portion is always a square)
-        @param depth kernel invocation depth
+/**
+computes the dwells for Mandelbrot image using dynamic parallelism; one block is launched per pixel
+        @param dwells : the output array
+        @param w : the width of the output image
+        @param h : the height of the output image
+        @param cmin : left-bottom corner of the image
+        @param cmax : right-top corner of the image
+        @param x0 : the starting x coordinate of the portion to compute
+        @param y0 : the starting y coordinate of the portion to compute
+        @param d  : the size of the portion to compute (a square)
+        @param depth : kernel recursive invocation depth
         @remarks the algorithm reverts to per-pixel Mandelbrot evaluation once either maximum depth or minimum size is reached
  */
 __global__
@@ -380,7 +379,7 @@ void mandelbrot_block_k (int *dwells, int w, int h, complex cmin, complex cmax, 
   *
  **/
 #define CUT_DWELL (MAX_DWELL / 4)
-inline void dwell_color(int *r, int *g, int *b, int dwell)
+inline void map_int_to_color(int *r, int *g, int *b, int dwell)
 {
     // black for the Mandelbrot set
     if (dwell >= MAX_DWELL)
@@ -414,15 +413,15 @@ void Save_PPM(int* data, int w, int h)
     for (int i = 0; i < w * h; i++)  // loop over pixels, write RGB values
     {
         int r, g, b;
-        dwell_color(&r, &g, &b, data[i]);
+        map_int_to_color(&r, &g, &b, data[i]);
         fprintf(f, "%d %d %d ", r, g, b);
     }
     fclose(f);
 }
 
 /** data size */
-#define H (1 * 1024)
-#define W (1 * 1024)
+#define H (1 * 1280)
+#define W (1 * 720)
 
 int main(int argc, char **argv)
 {
