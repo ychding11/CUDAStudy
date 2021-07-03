@@ -1,5 +1,6 @@
-cmake_minimum_required (VERSION 2.8)
-project (mandelbrot_test)
+cmake_minimum_required (VERSION 3.8 FATAL_ERROR)
+
+project (mandelbrot_test LANGUAGES CXX CUDA)
 
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON) 
 
@@ -9,22 +10,13 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
 SET(EXE_NAME "mandelbrot")
 
-file(GLOB SRC_FILES
-    ${CMAKE_SOURCE_DIR}/src/*.h
-    ${CMAKE_SOURCE_DIR}/src/*.cpp
-)
-file(GLOB CUDA_SRC_FILES
-    ${CMAKE_SOURCE_DIR}/src/*.cu
-)
+file( GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.h ${CMAKE_SOURCE_DIR}/src/*.cpp )
+file( GLOB CUDA_SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.cu )
 
-
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/
-  ${CMAKE_SOURCE_DIR}/src/
-)
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/src )
 
 #CMake built-in module
-find_package(CUDA QUIET REQUIRED)
+#find_package(CUDA QUIET REQUIRED)
 
 
 #######################################################################################
@@ -43,8 +35,6 @@ foreach(f ${SRC_FILES})
     source_group("${SRCGR}" FILES ${f})
 endforeach()
 
-set(ENABLE_HIDECONSOLE_BUILD TRUE CACHE BOOL "TRUE to hide console for Windows sys")
-
 if(WINDOWS)
   set(GUI_TYPE WIN32)
 elseif(MACOSX)
@@ -52,7 +42,7 @@ elseif(MACOSX)
 endif()
 
 if(MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
 
@@ -80,7 +70,11 @@ SET(LINK_OPTIONS " ")
 ####################################### Add Executable ###########################################
 #Use static cuda link
 
-cuda_add_executable(${EXE_NAME} ${CUDA_SRC_FILES})
+#cuda_add_executable(${EXE_NAME} ${CUDA_SRC_FILES})
+
+add_executable( ${EXE_NAME} ${CUDA_SRC_FILES} )
+target_compile_features( ${EXE_NAME} PUBLIC cxx_std_11 )
+set_target_properties( ${EXE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
 #--------------------------------------------------------------------
 # output dirs
@@ -96,8 +90,8 @@ set_target_properties(${EXE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CM
 # Open the console window in visual studio projects
 #--------------------------------------------------------------------
 if(MSVC)
-set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
-set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
+    set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+    set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
 endif()
 
 #######################################################################################
