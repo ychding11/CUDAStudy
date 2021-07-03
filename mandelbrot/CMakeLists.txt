@@ -59,6 +59,8 @@ add_definitions(-D__STDC_LIMIT_MACROS)
 add_definitions(-D__STDC_CONSTANT_MACROS)
 add_definitions(-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 
+#add_definitions(-DCMAKE_CUDA_ARCHITECTURES=75)
+
 add_definitions(-DUSE_DL_PREFIX)
 add_definitions(-DGLEW_STATIC)
 
@@ -69,6 +71,8 @@ add_definitions(-DGLEW_STATIC)
 add_executable( ${EXE_NAME} ${CUDA_SRC_FILES} )
 target_compile_features( ${EXE_NAME} PUBLIC cxx_std_11 )
 set_target_properties( ${EXE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
+
+set_property( TARGET ${EXE_NAME} PROPERTY CUDA_ARCHITECTURES 75 ) # Turing = 75
 
 #######################################################################################
 # output dirs
