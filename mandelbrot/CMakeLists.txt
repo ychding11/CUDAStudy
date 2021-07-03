@@ -1,22 +1,25 @@
+#######################################################################################
+#
+# https://cliutils.gitlab.io/modern-cmake/chapters/packages/CUDA.html
+#
+#######################################################################################
+
 cmake_minimum_required (VERSION 3.8 FATAL_ERROR)
 
 project (mandelbrot_test LANGUAGES CXX CUDA)
 
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON) 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON) 
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "Configuration types" FORCE)
 
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
-SET(EXE_NAME "mandelbrot")
+set(EXE_NAME "mandelbrot")
 
 file( GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.h ${CMAKE_SOURCE_DIR}/src/*.cpp )
 file( GLOB CUDA_SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.cu )
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/src )
-
-#CMake built-in module
-#find_package(CUDA QUIET REQUIRED)
 
 
 #######################################################################################
@@ -46,9 +49,9 @@ if(MSVC)
 endif()
 
 
-#--------------------------------------------------------------------
+#######################################################################################
 # preproc
-#--------------------------------------------------------------------
+#######################################################################################
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D__STDC_FORMAT_MACROS)
 add_definitions(-DBX_CONFIG_ENABLE_MSVC_LEVEL4_WARNINGS=1)
@@ -59,26 +62,17 @@ add_definitions(-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 add_definitions(-DUSE_DL_PREFIX)
 add_definitions(-DGLEW_STATIC)
 
-if(MSVC)
 
-endif()
-
-
-SET(LINK_OPTIONS " ")
-
-
-####################################### Add Executable ###########################################
-#Use static cuda link
-
-#cuda_add_executable(${EXE_NAME} ${CUDA_SRC_FILES})
-
+#######################################################################################
+# executable 
+#######################################################################################
 add_executable( ${EXE_NAME} ${CUDA_SRC_FILES} )
 target_compile_features( ${EXE_NAME} PUBLIC cxx_std_11 )
 set_target_properties( ${EXE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
-#--------------------------------------------------------------------
+#######################################################################################
 # output dirs
-#--------------------------------------------------------------------
+#######################################################################################
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin )
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin )
 set_target_properties(${EXE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR}/bin )
@@ -86,15 +80,15 @@ set_target_properties(${EXE_NAME} PROPERTIES DEBUG_POSTFIX "_d")
 set_target_properties(${EXE_NAME} PROPERTIES RELWITHDEBINFO_POSTFIX "RelWithDebInfo")
 set_target_properties(${EXE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
-#--------------------------------------------------------------------
+#######################################################################################
 # Open the console window in visual studio projects
-#--------------------------------------------------------------------
+#######################################################################################
 if(MSVC)
     set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
     set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
 endif()
 
 #######################################################################################
-##For reference
-##https://cmake.org/cmake/help/latest/manual/cmake-properties.7.html#target-properties
+# For reference
+#   https://cmake.org/cmake/help/latest/manual/cmake-properties.7.html#target-properties
 #######################################################################################
