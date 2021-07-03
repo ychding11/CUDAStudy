@@ -1,4 +1,3 @@
-// based on smallpt, a path tracer by Kevin Beason, 2008  
  
 #include <iostream>
 #include <chrono>  // for high_resolution_clock
@@ -9,6 +8,10 @@
 #include "cutil_math.h" // from http://www.icmc.usp.br/~castelo/CUDA/common/inc/cutil_math.h
 #include "helper_string.h"
 
+#ifndef __CUDACC__ 
+#define __CUDACC__
+#endif
+#include <device_functions.h>
 
 #define CUDA_CALL_CHECK(x)                             \
 do{                                                    \
@@ -314,34 +317,34 @@ static void help(const char *name)
     exit(0);
 }
 
-int main(int argc, char *argv[])
-{
-    int width = 800, height = 800, samps = 800;
-    float vfov = 45.f;
-    bool showHelp = false;
-    
-    if (argc > 1)
-    {
-        if (checkCmdLineFlag(argc, (const char**)argv, "help"))
-        {
-            help(argv[0]);
-        }
-        if (checkCmdLineFlag(argc, (const char **)argv, "width"))
-            width = getCmdLineArgumentInt(argc, (const char **)argv, "width");
-        if (checkCmdLineFlag(argc, (const char **)argv, "height"))
-            height = getCmdLineArgumentInt(argc, (const char **)argv, "height");
-        if (checkCmdLineFlag(argc, (const char **)argv, "samples"))
-            samps = getCmdLineArgumentInt(argc, (const char **)argv, "samples");
-        if (checkCmdLineFlag(argc, (const char **)argv, "vfov"))
-            vfov = getCmdLineArgumentFloat(argc, (const char **)argv, "vfov");
-    }
-
-    TestSmallPTOnGPU(width, height, samps, vfov);
-
-    system("ffplay smallptcuda.ppm");
-    system("PAUSE");
-}
-
+//int main(int argc, char *argv[])
+//{
+//    int width = 800, height = 800, samps = 800;
+//    float vfov = 45.f;
+//    bool showHelp = false;
+//    
+//    if (argc > 1)
+//    {
+//        if (checkCmdLineFlag(argc, (const char**)argv, "help"))
+//        {
+//            help(argv[0]);
+//        }
+//        if (checkCmdLineFlag(argc, (const char **)argv, "width"))
+//            width = getCmdLineArgumentInt(argc, (const char **)argv, "width");
+//        if (checkCmdLineFlag(argc, (const char **)argv, "height"))
+//            height = getCmdLineArgumentInt(argc, (const char **)argv, "height");
+//        if (checkCmdLineFlag(argc, (const char **)argv, "samples"))
+//            samps = getCmdLineArgumentInt(argc, (const char **)argv, "samples");
+//        if (checkCmdLineFlag(argc, (const char **)argv, "vfov"))
+//            vfov = getCmdLineArgumentFloat(argc, (const char **)argv, "vfov");
+//    }
+//
+//    TestSmallPTOnGPU(width, height, samps, vfov);
+//
+//    system("ffplay smallptcuda.ppm");
+//    system("PAUSE");
+//}
+//
 void SaveToPPM(float3* output, int w, int h)
 {
     // Write image to PPM file, a very simple image file format
@@ -487,6 +490,198 @@ void mandelbrot_pixel_k (int *dwells, int w, int h, complex cmin, complex cmax, 
         dwells[y * w + x] = pixel_dwell(w, h, cmin, cmax, x, y);
     }
 }
+
+/** binary operation for common dwell "reduction": MAX_DWELL + 1 = neutral element, -1 = dwells are different */
+#define NEUT_DWELL (MAX_DWELL + 1)
+#define DIFF_DWELL (-1)
+
+__device__
+int same_dwell(int d1, int d2)
+{
+    if (d1 == d2)
+        return d1;
+    else if (d1 == NEUT_DWELL || d2 == NEUT_DWELL)
+        return min(d1, d2);
+    else
+        return DIFF_DWELL;
+}  // same_dwell
+
+/** evaluates the common border dwell, if it exists */
+__device__
+int border_dwell (int w, int h, complex cmin, complex cmax, int x0, int y0, int d)
+{
+    // check whether all boundary pixels have the same dwell
+    int tid = threadIdx.y * blockDim.x + threadIdx.x;
+    int bs = blockDim.x * blockDim.y;
+    int comm_dwell = NEUT_DWELL;
+    // for all boundary pixels, distributed across threads
+    for (int r = tid; r < d; r += bs)
+    {
+        // for each boundary: b = 0 is east, then counter-clockwise
+        for (int b = 0; b < 4; b++)
+        {
+            int x = b % 2 != 0 ? x0 + r : (b == 0 ? x0 + d - 1 : x0);
+            int y = b % 2 == 0 ? y0 + r : (b == 1 ? y0 + d - 1 : y0);
+            int dwell = pixel_dwell(w, h, cmin, cmax, x, y);
+            comm_dwell = same_dwell(comm_dwell, dwell);
+        }
+    }
+    // for all boundary pixels
+    // reduce across threads in the block
+    __shared__ int ldwells[BSX * BSY];
+    int nt = min(d, BSX * BSY);
+    if (tid < nt)
+        ldwells[tid] = comm_dwell;
+
+    __syncthreads();
+
+    for (; nt > 1; nt /= 2)
+    {
+        if (tid < nt / 2)
+            ldwells[tid] = same_dwell(ldwells[tid], ldwells[tid + nt / 2]);
+        __syncthreads();
+    }
+    return ldwells[0];
+}  // border_dwell
+
+/** computes the dwells for Mandelbrot image using dynamic parallelism; one block is launched per pixel
+        @param dwells the output array
+        @param w the width of the output image
+        @param h the height of the output image
+        @param cmin the complex value associated with the left-bottom corner of the
+        image
+        @param cmax the complex value associated with the right-top corner of the
+        image
+        @param x0 the starting x coordinate of the portion to compute
+        @param y0 the starting y coordinate of the portion to compute
+        @param d the size of the portion to compute (the portion is always a square)
+        @param depth kernel invocation depth
+        @remarks the algorithm reverts to per-pixel Mandelbrot evaluation once either maximum depth or minimum size is reached
+ */
+__global__
+void mandelbrot_block_k (int *dwells, int w, int h, complex cmin, complex cmax, int x0, int y0, int d, int depth)
+{
+    x0 += d * blockIdx.x,
+    y0 += d * blockIdx.y;
+    int comm_dwell = border_dwell(w, h, cmin, cmax, x0, y0, d);
+    if (threadIdx.x == 0 && threadIdx.y == 0)
+    {
+        if (comm_dwell != DIFF_DWELL)
+        {
+            // uniform dwell, just fill
+            dim3 bs(BSX, BSY), grid(divup(d, BSX), divup(d, BSY));
+            dwell_fill_k <<<grid, bs >>> (dwells, w, x0, y0, d, comm_dwell);
+        }
+        else if (depth + 1 < MAX_DEPTH && d / SUBDIV > MIN_SIZE)
+        {
+            // subdivide recursively
+            dim3 bs(blockDim.x, blockDim.y), grid(SUBDIV, SUBDIV);
+            mandelbrot_block_k <<<grid, bs >>> (dwells, w, h, cmin, cmax, x0, y0, d / SUBDIV, depth + 1);
+        }
+        else
+        {
+            // leaf, per-pixel kernel
+            dim3 bs(BSX, BSY), grid(divup(d, BSX), divup(d, BSY));
+            mandelbrot_pixel_k <<<grid, bs >>> (dwells, w, h, cmin, cmax, x0, y0, d);
+        }
+
+        //cucheck_dev(cudaGetLastError());
+        check_error(x0, y0, d);
+    }
+}
+
+/**
+  * converter : dwell --> color 
+  *
+ **/
+#define CUT_DWELL (MAX_DWELL / 4)
+inline void dwell_color(int *r, int *g, int *b, int dwell)
+{
+    // black for the Mandelbrot set
+    if (dwell >= MAX_DWELL)
+    {
+        *r = *g = *b = 0;
+    }
+    else
+    {
+        if (dwell < 0) dwell = 0;
+        if (dwell <= CUT_DWELL)
+        {
+            // from black to blue the first half
+            *r = *g = 0;
+            *b = 128 + dwell * 127 / (CUT_DWELL);
+        }
+        else
+        {
+            // from blue to white for the second half
+            *b = 255;
+            *r = *g = (dwell - CUT_DWELL) * 255 / (MAX_DWELL - CUT_DWELL);
+        }
+    }
+}
+
+void Save_PPM(int* data, int w, int h)
+{
+    // Write image to PPM file, a very simple image file format
+    FILE *f = fopen("smallptcuda.ppm", "w");          
+    fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
+
+    for (int i = 0; i < w * h; i++)  // loop over pixels, write RGB values
+    {
+        int r, g, b;
+        dwell_color(&r, &g, &b, data[i]);
+        fprintf(f, "%d %d %d ", r, g, b);
+    }
+    fclose(f);
+}
+
+/** data size */
+#define H (16 * 1024)
+#define W (16 * 1024)
+#define IMAGE_PATH "./mandelbrot.png"
+
+int main(int argc, char **argv)
+{
+    int w = W, h = H;
+    size_t dwell_sz = w * h * sizeof(int);
+    int *h_dwells = nullptr,
+        *d_dwells = nullptr;
+    CUDA_CALL_CHECK(cudaMalloc((void**)&d_dwells, dwell_sz));
+    h_dwells = (int*)malloc(dwell_sz);
+
+    // Record start time                          
+    auto start = std::chrono::high_resolution_clock::now();
+
+    //< schedule threads on device and launch CUDA kernel from host
+    //< use default stream
+    dim3 bs(BSX, BSY), grid(INIT_SUBDIV, INIT_SUBDIV);
+    mandelbrot_block_k <<< grid, bs >>> (d_dwells, w, h, complex(-1.5, -1), complex(0.5, 1), 0, 0, W / INIT_SUBDIV, 1);
+    CUDA_CALL_CHECK(cudaThreadSynchronize());
+
+    // Record end time
+    auto finish = std::chrono::high_resolution_clock::now();
+
+    CUDA_CALL_CHECK(cudaMemcpy(h_dwells, d_dwells, dwell_sz, cudaMemcpyDeviceToHost));
+
+    std::chrono::duration<double> elapsed = finish - start;
+    printf("Mandelbrot set computed in %.3lf second  @(%.3lf Mpix/s)\n", elapsed.count(), h * w * 1e-6 / elapsed.count());
+
+
+    //< save the image to disk 
+    //SaveToPPM(h_dwells, width, height);
+
+    Save_PPM(h_dwells, w, h);
+
+    // print performance
+
+    // free data
+    cudaFree(d_dwells);
+    free(h_dwells);
+    return 0;
+}
+
+
+
 
 
 
