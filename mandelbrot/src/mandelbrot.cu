@@ -421,9 +421,8 @@ void Save_PPM(int* data, int w, int h)
 }
 
 /** data size */
-#define H (2 * 1024)
-#define W (2 * 1024)
-#define IMAGE_PATH "mandelbrot.ppm"
+#define H (1 * 1024)
+#define W (1 * 1024)
 
 int main(int argc, char **argv)
 {
@@ -452,8 +451,8 @@ int main(int argc, char **argv)
     printf("Mandelbrot set computed in %.3lf second  @(%.3lf Mpix/s)\n", elapsed.count(), h * w * 1e-6 / elapsed.count());
 
     Save_PPM(h_dwells, w, h);
-
-    // print performance
+    system("ffplay smallptcuda.ppm");
+    system("PAUSE");
 
     // free data
     cudaFree(d_dwells);
