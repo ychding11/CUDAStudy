@@ -72,6 +72,7 @@ add_executable( ${EXE_NAME} ${CUDA_SRC_FILES} )
 target_compile_features( ${EXE_NAME} PUBLIC cxx_std_11 )
 set_target_properties( ${EXE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
+# https://cmake.org/cmake/help/git-stage/policy/CMP0104.html
 set_property( TARGET ${EXE_NAME} PROPERTY CUDA_ARCHITECTURES 75 ) # Turing = 75
 
 #######################################################################################
