@@ -1,11 +1,14 @@
 cmake_minimum_required (VERSION 2.8)
-project (Sphere)
 
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON) 
+project (sphere LANGUAGES CXX CUDA)
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON) 
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "Configuration types" FORCE)
 
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+
+set(EXE_NAME "single_sphere")
 
 file(GLOB SRC_FILES
     ${CMAKE_SOURCE_DIR}/src/*.h
@@ -13,14 +16,8 @@ file(GLOB SRC_FILES
 )
 
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/
-  ${CMAKE_SOURCE_DIR}/src/
-)
-
-#CMake built-in module
-find_package(CUDA QUIET REQUIRED)
-
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
+include_directories( ${CMAKE_SOURCE_DIR}/src )
 
 #######################################################################################
 #
@@ -39,7 +36,6 @@ foreach(f ${SRC_FILES})
     source_group("${SRCGR}" FILES ${f})
 endforeach()
 
-set(ENABLE_HIDECONSOLE_BUILD TRUE CACHE BOOL "TRUE to hide console for Windows sys")
 
 if(WINDOWS)
   set(GUI_TYPE WIN32)
@@ -48,7 +44,7 @@ elseif(MACOSX)
 endif()
 
 if(MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
 
@@ -60,7 +56,6 @@ add_definitions(-D__STDC_FORMAT_MACROS)
 add_definitions(-DBX_CONFIG_ENABLE_MSVC_LEVEL4_WARNINGS=1)
 add_definitions(-D__STDC_LIMIT_MACROS)
 add_definitions(-D__STDC_CONSTANT_MACROS)
-add_definitions(-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 
 add_definitions(-DUSE_DL_PREFIX)
 add_definitions(-DGLEW_STATIC)
@@ -68,8 +63,9 @@ add_definitions(-DGLEW_STATIC)
 #######################################################################################
 #Use static cuda link
 #######################################################################################
-SET(EXE_NAME "single_sphere")
-cuda_add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/single_sphere.cu" ${SRC_FILES})
+add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/single_sphere.cu" ${SRC_FILES})
+target_compile_features( ${EXE_NAME} PUBLIC cxx_std_11 )
+set_target_properties( ${EXE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
 #######################################################################################
 # output dirs
