@@ -26,7 +26,6 @@ do{                                                    \
 
 #define M_PI 3.14159265359f  // pi
 
-
 __device__ float hit_sphere(const ray& r, const vec3& center, float radius)
 {
     vec3 oc = r.origin() - center;
@@ -127,12 +126,6 @@ void load_curandState(void* output, int w, int h)
     fprintf(stdout, "- load curand states from %s\n", filename);
 }
 
-//inline bool file_exists(const std::string name)
-//{
-//    struct stat buffer;
-//    return (stat(name.c_str(), &buffer) == 0);
-//}
-
 int TestSmallPTOnGPU(int width, int height, int samps)
 {
     printf("\n Param  %d, %d, %d\n", width, height, samps);
@@ -232,15 +225,3 @@ int main(int argc, char *argv[])
     TestSmallPTOnGPU(width, height, samps);
     system("PAUSE");
 }
-
-//void SaveToPPM(float* output, int w, int h)
-//{
-//    // Write image to PPM file, a very simple image file format
-//    FILE *f = fopen("smallptcuda.ppm", "w");          
-//    fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
-//    for (int i = 0; i < w * h * 3; i += 3)  // loop over pixels, write RGB values
-//    fprintf(f, "%d %d %d ", toInt(output[i]), toInt(output[i + 1]), toInt(output[i + 2]));
-//    fclose(f);
-//
-//    system("ffplay smallptcuda.ppm");
-//}
