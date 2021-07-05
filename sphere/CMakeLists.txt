@@ -1,6 +1,12 @@
-cmake_minimum_required (VERSION 2.8)
+#######################################################################################
+#
+# https://cliutils.gitlab.io/modern-cmake/chapters/packages/CUDA.html
+#
+#######################################################################################
 
-project (sphere LANGUAGES CXX CUDA)
+cmake_minimum_required (VERSION 3.13)
+
+project (sphere LANGUAGES CXX CUDA) # cuda & cpp in project
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON) 
 
@@ -28,7 +34,7 @@ foreach(f ${SRC_FILES})
     file(RELATIVE_PATH SRCGR ${CMAKE_SOURCE_DIR} ${f})
     set(SRCGR "Sources/${SRCGR}")
 
-    # Extract the folder, ie remove the filename part
+    # Extract patch, without filename part
     string(REGEX REPLACE "(.*)(/[^/]*)$" "\\1" SRCGR ${SRCGR})
 
     # Source_group expects \\ (double antislash), not / (slash)
