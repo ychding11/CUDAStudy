@@ -73,6 +73,9 @@ add_executable(${EXE_NAME} "${CMAKE_SOURCE_DIR}/src/single_sphere.cu" ${SRC_FILE
 target_compile_features( ${EXE_NAME} PUBLIC cxx_std_11 )
 set_target_properties( ${EXE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
+# https://cmake.org/cmake/help/git-stage/policy/CMP0104.html
+# https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
+set_target_properties( ${EXE_NAME} PROPERTIES CUDA_ARCHITECTURES "35;50;75")
 #######################################################################################
 # output dirs
 #######################################################################################
