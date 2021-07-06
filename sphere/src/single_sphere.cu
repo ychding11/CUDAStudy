@@ -140,7 +140,7 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 
     dim3 block(BLOCK_X, BLOCK_Y, 1);   
     dim3 subgrid(SUB_GRID_X / block.x, SUB_GRID_Y / block.y, 1);
-    dim3 grid( width/ block.x, height / block.y, 1);
+    dim3 grid( width / block.x, height / block.y, 1);
 
 
     CUDA_CALL_CHECK( cudaMalloc(&output_d, width * height * sizeof(float) * 3) );
@@ -163,9 +163,9 @@ int TestSmallPTOnGPU(int width, int height, int samps)
             {
                 setup_random_kernel <<< subgrid, block >>>(devStates, width, height, j, i); 
                 CUDA_CALL_CHECK(cudaGetLastError());
+                CUDA_CALL_CHECK(cudaDeviceSynchronize());
             }
         }
-        CUDA_CALL_CHECK(cudaDeviceSynchronize());
         auto finishRand = std::chrono::high_resolution_clock::now();
         elapsed = finishRand - startRand;
         printf("Random State Done! Time=%lf seconds\n", elapsed.count());
@@ -185,9 +185,18 @@ int TestSmallPTOnGPU(int width, int height, int samps)
     // Record start time                          
     auto start = std::chrono::high_resolution_clock::now();
 
+#if 1
     for (int i = 0; i < nSubx; ++i)
         for (int j = 0; j < nSuby; ++j)
-            render_kernel <<< grid, block >>>(devStates, output_d, width, height, samps);  
+        {
+            printf("Launch subgrid [%d, %d] \n", i, j);
+            render_kernel <<< subgrid, block >>>(devStates, output_d, width, height, samps, i, j);  
+        }
+#else
+    printf("Launch grid \n");
+    render_kernel <<< grid, block >>>(devStates, output_d, width, height, samps);  
+#endif
+
     CUDA_CALL_CHECK(cudaGetLastError());
     CUDA_CALL_CHECK(cudaDeviceSynchronize());
 
@@ -208,7 +217,7 @@ int TestSmallPTOnGPU(int width, int height, int samps)
 
 int main(int argc, char *argv[])
 {
-    int width = 512, height = 512, samps = 1024;
+    int width = 1280, height = 720, samps = 1024;
     //int width = 1024, height = 1024, samps = 256;
     
     if (argc > 1)
