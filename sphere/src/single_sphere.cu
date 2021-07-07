@@ -70,6 +70,7 @@ __global__ void setup_random_kernel(curandState *states, int nx, int ny, int sub
     unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
     x = SUB_GRID_X * subx + x;
     y = SUB_GRID_Y * suby + y;
+    if (x >= nx || y >= ny) return;
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
 
     curand_init(1234, i, 0, &states[i]);
@@ -82,6 +83,8 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
     x = SUB_GRID_X * subx + x;
     y = SUB_GRID_Y * suby + y;
+    if (x >= nx || y >= ny) return;
+
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
 
     vec3 low_left_corner(-1.f, -1.f, -1.f);
