@@ -75,7 +75,7 @@ set_target_properties( ${EXE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
 # https://cmake.org/cmake/help/git-stage/policy/CMP0104.html
 # https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
-set_target_properties( ${EXE_NAME} PROPERTIES CUDA_ARCHITECTURES "35;50;75")
+set_target_properties( ${EXE_NAME} PROPERTIES CUDA_ARCHITECTURES "50;75")
 #######################################################################################
 # output dirs
 #######################################################################################
