@@ -45,10 +45,11 @@ __device__ float hit_sphere(const ray& r, const vec3& center, float radius)
 
 __device__ vec3 color(const ray& r)
 {
-    float t = hit_sphere(r, vec3(0.f, 0.f, -3.f), 0.5f);
+    vec3 center{ 0.f, 0.f, -2.f };
+    float t = hit_sphere(r, center, 0.5f);
     if (t > 0.f)
     {
-        vec3 n = unit_vector(r.point_at_parameter(t) - vec3(0.f, 0.f, -1.f));
+        vec3 n = unit_vector(r.point_at_parameter(t) - center);
         return 0.5f * vec3(n.x() + 1.f, n.y() + 1.f, n.z() + 1.f);
     }
     else
