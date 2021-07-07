@@ -45,7 +45,7 @@ __device__ float hit_sphere(const ray& r, const vec3& center, float radius)
 
 __device__ vec3 color(const ray& r)
 {
-    float t = hit_sphere(r, vec3(0.f, 0.f, -1.f), 0.5f);
+    float t = hit_sphere(r, vec3(0.f, 0.f, -3.f), 0.5f);
     if (t > 0.f)
     {
         vec3 n = unit_vector(r.point_at_parameter(t) - vec3(0.f, 0.f, -1.f));
@@ -86,10 +86,10 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
     if (x >= nx || y >= ny) return;
 
     unsigned int i = (ny - y - 1) * nx + x; // index of current pixel (calculated using thread index) 
+    float aspect = float(nx) / float(ny);
 
-    vec3 low_left_corner(-1.f, -1.f, -1.f);
-    vec3 horizonal(2.f, 0.f, 0.f);
-    vec3 vertical(0.f, 2.f, 0.f);
+    vec3 vertical(0.f, 1.f, 0.f);
+    vec3 horizonal = vec3{1.f, 0.f, 0.f} * aspect;
     vec3 origin(0.f, 0.f, 0.f);
 
     curandState localState = states[i];
@@ -99,9 +99,9 @@ __global__ void render_kernel(curandState *states, float* output, int nx, int ny
     {
         float dx = curand_uniform(&localState);
         float dy = curand_uniform(&localState);
-        float u = float(x + dx) / float(nx);
-        float v = float(y + dy) / float(ny);
-        ray r(origin, low_left_corner + u * horizonal + v * vertical);
+        float u = float(x + dx) / float(nx); u = 2.f * u - 1.f;
+        float v = float(y + dy) / float(ny); v = 2.f * v - 1.f;
+        ray r(origin, u * horizonal + v * vertical + vec3{0.f, 0.f, -1.f});
         col += color(r);
     }
     states[i] = localState;

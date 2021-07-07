@@ -60,6 +60,12 @@ public:
     __host__
     __device__ inline vec3& operator/=(const vec3 &v2);
 
+    __host__ __device__
+    inline vec3 operator*(const float t)
+    {
+        return vec3(e[0]*t, e[1]*t, e[2]*t);
+    }
+
     __host__
     __device__ inline vec3& operator*=(const float t);
 
