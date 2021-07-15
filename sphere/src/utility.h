@@ -32,7 +32,7 @@ public:
          m_end_time = std::chrono::high_resolution_clock::now();
          auto elapsed = m_end_time - m_start_time;
          std::cout << "[Perfomance Probe] "
-             << m_name << " time = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << " µs. "
+             << m_name << " time = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << " us. "
              << std::endl;
     }
 };
